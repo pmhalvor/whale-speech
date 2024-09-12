@@ -1,0 +1,1037 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0,
+          36.8
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "GENERAL",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "13:51:46",
+          "startDate": "2024-09-01",
+          "startTime": "13:51:46",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1169917,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/5b254846-e6eb-4cd0-a366-c686514cb1ca.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/5b254846-e6eb-4cd0-a366-c686514cb1ca.jpg"
+        },
+        "id": 489723,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0135,
+          36.6646
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "12:00:00",
+          "startDate": "2024-09-01",
+          "startTime": "10:30:00",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1169955,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/0d7f7344-71dc-47d8-81e5-abd5bac9dba9.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/0d7f7344-71dc-47d8-81e5-abd5bac9dba9.jpg"
+        },
+        "id": 489848,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MANUAL",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0135,
+          36.6646
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "12:00:00",
+          "startDate": "2024-09-01",
+          "startTime": "10:30:00",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1169956,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/2a9e8162-a970-4b87-aca6-bee7c0017ed2.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/2a9e8162-a970-4b87-aca6-bee7c0017ed2.jpg"
+        },
+        "id": 489847,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MANUAL",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0,
+          36.8
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "GENERAL",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "13:51:25",
+          "startDate": "2024-09-01",
+          "startTime": "13:51:25",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1169918,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/9db42f6e-8539-43de-aada-fc71ddcbd57e.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/9db42f6e-8539-43de-aada-fc71ddcbd57e.jpg"
+        },
+        "id": 489724,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.9787,
+          36.7073
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "12:00:00",
+          "startDate": "2024-09-01",
+          "startTime": "10:30:00",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1169954,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/9ed7e72a-4462-484c-a7b4-3ff8499ee8d6.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/9ed7e72a-4462-484c-a7b4-3ff8499ee8d6.jpg"
+        },
+        "id": 489846,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MANUAL",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.849
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "11:39:49",
+          "startDate": "2024-09-01",
+          "startTime": "11:39:49",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170092,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/e8b1d44d-4b5d-445f-afe6-680658e9cf4c.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/e8b1d44d-4b5d-445f-afe6-680658e9cf4c.jpg"
+        },
+        "id": 489941,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.849
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "12:25:34",
+          "startDate": "2024-09-01",
+          "startTime": "12:25:34",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170093,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/c4ca6192-f3b5-478e-8e36-95a32d6f2f14.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/c4ca6192-f3b5-478e-8e36-95a32d6f2f14.jpg"
+        },
+        "id": 489942,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.849
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "12:32:48",
+          "startDate": "2024-09-01",
+          "startTime": "12:32:48",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170094,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/806679f1-9c91-4402-8539-28088a8fd72b.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/806679f1-9c91-4402-8539-28088a8fd72b.jpg"
+        },
+        "id": 489943,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725141600000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.955152,
+          36.668539
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "09:52:12",
+          "startDate": "2024-09-02",
+          "startTime": "09:52:03",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1169914,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/ebeba8c9-5934-4247-bc87-b1c2c25705d0.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/ebeba8c9-5934-4247-bc87-b1c2c25705d0.jpg"
+        },
+        "id": 489716,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.955152,
+          36.668539
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "09:52:12",
+          "startDate": "2024-09-02",
+          "startTime": "09:52:12",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167530,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/a5fd6f1f-14b4-4139-80f5-e1b77e756bb1.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/a5fd6f1f-14b4-4139-80f5-e1b77e756bb1.jpg"
+        },
+        "id": 489717,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.955152,
+          36.668539
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "09:59:40",
+          "startDate": "2024-09-02",
+          "startTime": "09:59:40",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167531,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/ec170011-b391-4c34-9023-2b9d72871625.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/ec170011-b391-4c34-9023-2b9d72871625.jpg"
+        },
+        "id": 489718,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.040152,
+          36.6641
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "10:35:54",
+          "startDate": "2024-09-02",
+          "startTime": "10:35:50",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167552,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/2bff4305-b38d-4271-8d12-e763de98ed8f.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/2bff4305-b38d-4271-8d12-e763de98ed8f.jpg"
+        },
+        "id": 489719,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.040152,
+          36.6641
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "10:35:54",
+          "startDate": "2024-09-02",
+          "startTime": "10:35:54",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167553,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/195de9de-b48f-4cda-a037-fc7c6156c741.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/195de9de-b48f-4cda-a037-fc7c6156c741.jpg"
+        },
+        "id": 489720,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "MOBILE_DEVICE",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0,
+          36.8
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "GENERAL",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "19:23:55.88",
+          "startDate": "2024-09-02",
+          "startTime": "19:23:55.88",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170258,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/1ae620f8-fb06-4399-8649-ff1abdfef6e7.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/1ae620f8-fb06-4399-8649-ff1abdfef6e7.jpg"
+        },
+        "id": 490030,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0,
+          36.8
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "GENERAL",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": null,
+          "startDate": "2024-09-02",
+          "startTime": null,
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170152,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/fc627e4a-885a-4659-8f0e-ebda7f4fe80c.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/fc627e4a-885a-4659-8f0e-ebda7f4fe80c.jpg"
+        },
+        "id": 489984,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.839
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "APPROX",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "14:28:51",
+          "startDate": "2024-09-02",
+          "startTime": "14:23:57",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170130,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/70e0b92e-e72a-4ac4-aed9-f70edac3e5e4.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/70e0b92e-e72a-4ac4-aed9-f70edac3e5e4.jpg"
+        },
+        "id": 489969,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.839
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "APPROX",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "14:24:05",
+          "startDate": "2024-09-02",
+          "startTime": "14:24:05",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170131,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/c1b3f5f0-302b-4103-9b4c-eeb37450c96a.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/c1b3f5f0-302b-4103-9b4c-eeb37450c96a.jpg"
+        },
+        "id": 489970,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.993,
+          36.839
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "APPROX",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "14:51:14.28",
+          "startDate": "2024-09-02",
+          "startTime": "14:12:16.5",
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1170133,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/37d2a564-93a3-445f-81db-923f5293c377.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/37d2a564-93a3-445f-81db-923f5293c377.jpg"
+        },
+        "id": 489971,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.85,
+          36.8
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "GENERAL",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": null,
+          "startDate": "2024-09-02",
+          "startTime": null,
+          "timezone": "America/Los_Angeles"
+        },
+        "displayImage": {
+          "id": 1173136,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/3d7cf73a-5ccc-4484-ab35-61e36027e35f.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/3d7cf73a-5ccc-4484-ab35-61e36027e35f.jpg"
+        },
+        "id": 490517,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.859728,
+          36.777235
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "09:43:48",
+          "startDate": "2024-09-02",
+          "startTime": "09:43:48",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167911,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/ef2ea0fd-b9ac-4abc-961b-47d03c74f46c.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/ef2ea0fd-b9ac-4abc-961b-47d03c74f46c.jpg"
+        },
+        "id": 488922,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.960648,
+          36.835212
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "10:39:43",
+          "startDate": "2024-09-02",
+          "startTime": "10:39:34",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167913,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/7cd35652-0c06-4f8b-b0cf-d540a49a4f20.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/7cd35652-0c06-4f8b-b0cf-d540a49a4f20.jpg"
+        },
+        "id": 488923,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.960648,
+          36.835212
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "10:39:34",
+          "startDate": "2024-09-02",
+          "startTime": "10:39:34",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167912,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/52dc16d3-1a26-458e-b576-2cba8075487f.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/52dc16d3-1a26-458e-b576-2cba8075487f.jpg"
+        },
+        "id": 488924,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.976618,
+          36.834488
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "11:01:03",
+          "startDate": "2024-09-02",
+          "startTime": "11:00:54",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167915,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/4e248ceb-018d-4295-80bf-77d2b525ce1e.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/4e248ceb-018d-4295-80bf-77d2b525ce1e.jpg"
+        },
+        "id": 488925,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -121.976618,
+          36.834488
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "11:00:54",
+          "startDate": "2024-09-02",
+          "startTime": "11:00:54",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167914,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/e80b323e-b740-4186-b173-03dacec0db76.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/e80b323e-b740-4186-b173-03dacec0db76.jpg"
+        },
+        "id": 488926,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.0249,
+          36.825895
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "11:29:29",
+          "startDate": "2024-09-02",
+          "startTime": "11:29:29",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167916,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/931f1b60-ec14-439d-a103-8e0dd5af485a.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/931f1b60-ec14-439d-a103-8e0dd5af485a.jpg"
+        },
+        "id": 488927,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          -122.023032,
+          36.827832
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "accuracy": "PRECISE",
+        "approved": true,
+        "attrs": null,
+        "dateRange": {
+          "endDate": null,
+          "endTime": "11:40:29",
+          "startDate": "2024-09-02",
+          "startTime": "11:40:29",
+          "timezone": "-07:00"
+        },
+        "displayImage": {
+          "id": 1167917,
+          "thumbUrl": "https://au-hw-media-t.happywhale.com/7664235e-340d-444c-bd5d-83dabf20290d.jpg",
+          "type": "IMAGE",
+          "url": "https://au-hw-media-m.happywhale.com/7664235e-340d-444c-bd5d-83dabf20290d.jpg"
+        },
+        "id": 488928,
+        "license": "PUBLIC_DOMAIN",
+        "maxCount": 1,
+        "minCount": 1,
+        "orgIds": [
+          null
+        ],
+        "precision": "CAMERA",
+        "public": true,
+        "region": "California, United States",
+        "species": "humpback_whale",
+        "system:time_start": 1725228000000
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}
