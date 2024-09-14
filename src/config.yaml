@@ -7,9 +7,12 @@ stages:
     end: "2016-12-21T00:45:00"
     timezone: "America/Los_Angeles"
   
-  geometery_search:
-    file: "data/geo/monterey_bay_50kmr.geojson"
+  search:
+    file_template: "{root_dir}/data/geo/monterey_bay_50km.geojson"
     species: "humpback_whale"
+    start: "2016-12-21"
+    end: "2016-12-21"
+    export_template: "{root_dir}/data/sightings/{filename}-{timeframe}.geojson"
 
   audio:
     path_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
