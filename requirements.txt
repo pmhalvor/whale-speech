@@ -1,1 +1,13 @@
 git+https://github.com/open-oceans/happywhale.git
+
+ipython 
+matplotlib>=3.9
+numpy 
+scipy
+six 
+
+tensorflow
+tensorflow_hub
+
+librosa
+soundfile
