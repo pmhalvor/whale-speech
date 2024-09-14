@@ -4,7 +4,7 @@ https://docs.mbari.org/pacific-sound/notebooks/humpbackwhales/detect/PacificSoun
 """
 from datetime import datetime, timedelta
 from six.moves.urllib.request import urlopen  # pyright: ignore
-from zoneinfo import ZoneInfo
+# from zoneinfo import ZoneInfo
 
 import io
 import soundfile as sf

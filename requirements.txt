@@ -1,7 +1,7 @@
 git+https://github.com/open-oceans/happywhale.git
 
 ipython 
-matplotlib>=3.9
+matplotlib
 numpy 
 pyyaml
 scipy
@@ -12,3 +12,5 @@ tensorflow_hub
 
 librosa
 soundfile
+
+apache-beam>=2.59.0
