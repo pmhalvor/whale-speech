@@ -43,7 +43,7 @@ def get_file_url(
     return url
 
 
-def load_audio(
+def load(
         start_time,
         end_time,
 
@@ -103,6 +103,7 @@ def load_audio(
 
     return psound_segment, psound_segment_seconds
 
+
 if __name__ == '__main__':
-    signal, signal_seconds = load_audio(start_time, end_time)
+    signal, signal_seconds = load(start_time, end_time)
     print(signal.shape, signal_seconds)
