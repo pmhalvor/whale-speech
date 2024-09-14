@@ -10,9 +10,9 @@ import io
 import soundfile as sf
 
 import config 
-stages = config.load("stages")
+stages = config.load()
 
-## Constants used through this file (loaded here for easier updates later)
+## Params (unpacked here for easier updates later)
 ### input
 # timezone = ZoneInfo(stages.input.timezone)  # 'America/Los_Angeles' # drop timezone for now
 start_time = datetime.strptime(stages.input.start, '%Y-%m-%dT%H:%M:%S')#.astimezone(timezone) 

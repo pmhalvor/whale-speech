@@ -2,6 +2,8 @@ from types import SimpleNamespace
 import yaml
 import os
 
+root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+
 
 def dict_to_namespace(d):
     """
@@ -13,7 +15,7 @@ def dict_to_namespace(d):
     return SimpleNamespace(**d)
 
 
-def load(section="stages", config_path=None):
+def load(section=None, parent="stages", config_path=None):
     """
     Load configuration from a YAML file and convert the section to a SimpleNamespace.
     """
@@ -24,9 +26,9 @@ def load(section="stages", config_path=None):
         config_path = os.path.join(current_dir, 'config.yaml')
 
     with open(config_path, 'r') as file:
-        config_data = yaml.safe_load(file)
+        config_data = yaml.safe_load(file).get(parent)
     
-    print(f"Loaded {config_path} - section: {section}")
+    print(f"Loaded {config_path} for {parent} in section: {section}")
     
     # Convert the section to a SimpleNamespace for dot notation
-    return dict_to_namespace(config_data[section])
+    return dict_to_namespace(config_data.get(section, config_data))
