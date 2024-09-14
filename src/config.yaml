@@ -1,33 +1,37 @@
 stages:
-  
+  general:
+    verbose: true
+
   input:
-    start: "2016-12-21"
-    end: "2016-12-21"
+    start: "2016-12-21T00:30:00"
+    end: "2016-12-21T00:45:00"
+    timezone: "America/Los_Angeles"
   
   geometery_search:
-    geometery_file: "data/geo/monterey_bay_50kmr.geojson"
+    file: "data/geo/monterey_bay_50kmr.geojson"
     species: "humpback_whale"
 
-  retrive_audio:
-    path_temnplate: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
+  audio:
+    path_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
     filename_template: "MARS-{year}{month:02}{day:02}T000000Z-16kHz.wav"
     sample_rate: 16000
-    margin: 600  # 10 minutes
+    margin: 60  # 10 minutes
 
-  filter_frequency:
-    highcut: 500
+  detection_filter:
+    highcut: 1500
     lowcut: 50
-    order: 5
-    threshold: 0.05
-    window_size: 1024
+    order: 10
+    threshold: 0.015
+    window_size: 512
 
-  classify_audio:
-    model_url: https://tfhub.dev/google/humpback_whale/1
-    model_sample_rate: 10000
+  model:
+    url: https://tfhub.dev/google/humpback_whale/1
+    sample_rate: 10000
+    hydrophone_sensitivity: -168.8
 
-  postprocess_labels:
+  postprocess:
     min_gap: 60  # 1 minute
-    min_score: 0.5
+    threshold: 0.5
 
   output:
     path_template: "data/labels/{year}/{month:02}/{day:02}.csv"
