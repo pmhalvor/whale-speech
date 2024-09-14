@@ -1,6 +1,15 @@
 # 📣🐋 Whale Speech 
 A pipeline to map whale sightings to hydrophone audio.
 ## Installation
+M1:
+```bash
+CONDA_SUBDIR=osx-arm64 conda create -n whale-speech python=3.11
+conda activate whale-speech
+pip install -r requirements.txt
+```
+
+
+Other:
 ```bash
 conda create -n whale-speech python=3.11
 conda activate whale-speech
