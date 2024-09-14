@@ -1,0 +1,59 @@
+# Sighting Radius
+The size of the geojson polygon we are looking for whale sightings in can greatly effect the model performance. 
+This document aims to find the optimal size of the radius. 
+Results from experimentation on different filters at different distance will be recorded here.
+
+## Background
+From the manually picked sightings, we see that both the model and our filters struggle to pick up whale sounds, even when it is obvious to the human ear. 
+There are a range of reasons for this, but distance from the hydrophone is a major factor. (A manually picked sighting may not be as close to the hydrophone location as a programmatically chosen one.)
+
+## Options
+
+### 1 km
+No data
+
+### 5 km 
+No data
+
+### 10 km
+#### Data
+
+latitude | longitude | approved | attrs | startDate | startTime | endDate | endTime | timezone | displayImgId | displayThumbUrl | displayImgType | displayImgUrl | id | accuracy | precision | displayImgLicense | maxCount | minCount | orgIds | public | region | species | system:time_start
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+36.727764 | -122.068258 | True |  | 2024-07-08 | 15:17:52 |  | 15:17:52 | -07:00 | 1110237 | https://au-hw-media-t.happywhale.com/c9fe66f6-f55e-40aa-9c50-c31f3fa735a4.jpg | IMAGE | https://au-hw-media-m.happywhale.com/c9fe66f6-f55e-40aa-9c50-c31f3fa735a4.jpg | 471768 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1720389600000
+36.809 | -122.077 | True |  | 2024-07-08 | 11:47:23 |  | 11:47:23 | America/Los_Angeles | 1119694 | https://au-hw-media-t.happywhale.com/da8d1064-2371-4818-ae67-186e1735c742.jpg | IMAGE | https://au-hw-media-m.happywhale.com/da8d1064-2371-4818-ae67-186e1735c742.jpg | 475956 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1720389600000
+36.809 | -122.077 | True |  | 2024-07-08 | 12:03:43 |  | 12:03:43 | America/Los_Angeles | 1119696 | https://au-hw-media-t.happywhale.com/3f31c73f-bc08-42b4-9add-b871d78b30cc.jpg | IMAGE | https://au-hw-media-m.happywhale.com/3f31c73f-bc08-42b4-9add-b871d78b30cc.jpg | 475957 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1720389600000
+36.809 | -122.077 | True |  | 2024-07-08 | 12:54:28 |  | 12:56:25 | America/Los_Angeles | 1119698 | https://au-hw-media-t.happywhale.com/46dc42ed-98f0-413a-9936-b7fed9c5ff84.jpg | IMAGE | https://au-hw-media-m.happywhale.com/46dc42ed-98f0-413a-9936-b7fed9c5ff84.jpg | 475958 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1720389600000
+36.809 | -122.077 | True |  | 2024-07-08 | 12:56:25 |  | 12:56:25 | America/Los_Angeles | 1119697 | https://au-hw-media-t.happywhale.com/cd2376a9-08cd-4552-a6b2-2d951d5ed20a.jpg | IMAGE | https://au-hw-media-m.happywhale.com/cd2376a9-08cd-4552-a6b2-2d951d5ed20a.jpg | 475959 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1720389600000
+
+
+### 20 km
+
+No data
+
+### 50 km
+
+#### Data
+latitude | longitude | approved | attrs | startDate | startTime | endDate | endTime | timezone | displayImgId | displayThumbUrl | displayImgType | displayImgUrl | id | accuracy | precision | displayImgLicense | maxCount | minCount | orgIds | public | region | species | system:time_start
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+36.6646 | -122.0135 | True |  | 2024-09-01 | 10:30:00 |  | 12:00:00 | America/Los_Angeles | 1169955 | https://au-hw-media-t.happywhale.com/0d7f7344-71dc-47d8-81e5-abd5bac9dba9.jpg | IMAGE | https://au-hw-media-m.happywhale.com/0d7f7344-71dc-47d8-81e5-abd5bac9dba9.jpg | 489848 | PRECISE | MANUAL | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.6646 | -122.0135 | True |  | 2024-09-01 | 10:30:00 |  | 12:00:00 | America/Los_Angeles | 1169956 | https://au-hw-media-t.happywhale.com/2a9e8162-a970-4b87-aca6-bee7c0017ed2.jpg | IMAGE | https://au-hw-media-m.happywhale.com/2a9e8162-a970-4b87-aca6-bee7c0017ed2.jpg | 489847 | PRECISE | MANUAL | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.8 | -122.0 | True |  | 2024-09-01 | 13:51:25 |  | 13:51:25 | America/Los_Angeles | 1169918 | https://au-hw-media-t.happywhale.com/9db42f6e-8539-43de-aada-fc71ddcbd57e.jpg | IMAGE | https://au-hw-media-m.happywhale.com/9db42f6e-8539-43de-aada-fc71ddcbd57e.jpg | 489724 | GENERAL |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.7073 | -121.9787 | True |  | 2024-09-01 | 10:30:00 |  | 12:00:00 | America/Los_Angeles | 1169954 | https://au-hw-media-t.happywhale.com/9ed7e72a-4462-484c-a7b4-3ff8499ee8d6.jpg | IMAGE | https://au-hw-media-m.happywhale.com/9ed7e72a-4462-484c-a7b4-3ff8499ee8d6.jpg | 489846 | PRECISE | MANUAL | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.849 | -121.993 | True |  | 2024-09-01 | 11:39:49 |  | 11:39:49 | America/Los_Angeles | 1170092 | https://au-hw-media-t.happywhale.com/e8b1d44d-4b5d-445f-afe6-680658e9cf4c.jpg | IMAGE | https://au-hw-media-m.happywhale.com/e8b1d44d-4b5d-445f-afe6-680658e9cf4c.jpg | 489941 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.849 | -121.993 | True |  | 2024-09-01 | 12:25:34 |  | 12:25:34 | America/Los_Angeles | 1170093 | https://au-hw-media-t.happywhale.com/c4ca6192-f3b5-478e-8e36-95a32d6f2f14.jpg | IMAGE | https://au-hw-media-m.happywhale.com/c4ca6192-f3b5-478e-8e36-95a32d6f2f14.jpg | 489942 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.849 | -121.993 | True |  | 2024-09-01 | 12:32:48 |  | 12:32:48 | America/Los_Angeles | 1170094 | https://au-hw-media-t.happywhale.com/806679f1-9c91-4402-8539-28088a8fd72b.jpg | IMAGE | https://au-hw-media-m.happywhale.com/806679f1-9c91-4402-8539-28088a8fd72b.jpg | 489943 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725141600000
+36.668539 | -121.955152 | True |  | 2024-09-02 | 09:52:03 |  | 09:52:12 | -07:00 | 1169914 | https://au-hw-media-t.happywhale.com/ebeba8c9-5934-4247-bc87-b1c2c25705d0.jpg | IMAGE | https://au-hw-media-m.happywhale.com/ebeba8c9-5934-4247-bc87-b1c2c25705d0.jpg | 489716 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.668539 | -121.955152 | True |  | 2024-09-02 | 09:52:12 |  | 09:52:12 | -07:00 | 1167530 | https://au-hw-media-t.happywhale.com/a5fd6f1f-14b4-4139-80f5-e1b77e756bb1.jpg | IMAGE | https://au-hw-media-m.happywhale.com/a5fd6f1f-14b4-4139-80f5-e1b77e756bb1.jpg | 489717 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.668539 | -121.955152 | True |  | 2024-09-02 | 09:59:40 |  | 09:59:40 | -07:00 | 1167531 | https://au-hw-media-t.happywhale.com/ec170011-b391-4c34-9023-2b9d72871625.jpg | IMAGE | https://au-hw-media-m.happywhale.com/ec170011-b391-4c34-9023-2b9d72871625.jpg | 489718 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.6641 | -122.040152 | True |  | 2024-09-02 | 10:35:50 |  | 10:35:54 | -07:00 | 1167552 | https://au-hw-media-t.happywhale.com/2bff4305-b38d-4271-8d12-e763de98ed8f.jpg | IMAGE | https://au-hw-media-m.happywhale.com/2bff4305-b38d-4271-8d12-e763de98ed8f.jpg | 489719 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.6641 | -122.040152 | True |  | 2024-09-02 | 10:35:54 |  | 10:35:54 | -07:00 | 1167553 | https://au-hw-media-t.happywhale.com/195de9de-b48f-4cda-a037-fc7c6156c741.jpg | IMAGE | https://au-hw-media-m.happywhale.com/195de9de-b48f-4cda-a037-fc7c6156c741.jpg | 489720 | PRECISE | MOBILE_DEVICE | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.8 | -122.0 | True |  | 2024-09-02 | 19:23:55.88 |  | 19:23:55.88 | America/Los_Angeles | 1170258 | https://au-hw-media-t.happywhale.com/1ae620f8-fb06-4399-8649-ff1abdfef6e7.jpg | IMAGE | https://au-hw-media-m.happywhale.com/1ae620f8-fb06-4399-8649-ff1abdfef6e7.jpg | 490030 | GENERAL |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.8 | -122.0 | True |  | 2024-09-02 |  |  |  | America/Los_Angeles | 1170152 | https://au-hw-media-t.happywhale.com/fc627e4a-885a-4659-8f0e-ebda7f4fe80c.jpg | IMAGE | https://au-hw-media-m.happywhale.com/fc627e4a-885a-4659-8f0e-ebda7f4fe80c.jpg | 489984 | GENERAL |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.839 | -121.993 | True |  | 2024-09-02 | 14:23:57 |  | 14:28:51 | America/Los_Angeles | 1170130 | https://au-hw-media-t.happywhale.com/70e0b92e-e72a-4ac4-aed9-f70edac3e5e4.jpg | IMAGE | https://au-hw-media-m.happywhale.com/70e0b92e-e72a-4ac4-aed9-f70edac3e5e4.jpg | 489969 | APPROX |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.839 | -121.993 | True |  | 2024-09-02 | 14:24:05 |  | 14:24:05 | America/Los_Angeles | 1170131 | https://au-hw-media-t.happywhale.com/c1b3f5f0-302b-4103-9b4c-eeb37450c96a.jpg | IMAGE | https://au-hw-media-m.happywhale.com/c1b3f5f0-302b-4103-9b4c-eeb37450c96a.jpg | 489970 | APPROX |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.839 | -121.993 | True |  | 2024-09-02 | 14:12:16.5 |  | 14:51:14.28 | America/Los_Angeles | 1170133 | https://au-hw-media-t.happywhale.com/37d2a564-93a3-445f-81db-923f5293c377.jpg | IMAGE | https://au-hw-media-m.happywhale.com/37d2a564-93a3-445f-81db-923f5293c377.jpg | 489971 | APPROX |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.8 | -121.85 | True |  | 2024-09-02 |  |  |  | America/Los_Angeles | 1173136 | https://au-hw-media-t.happywhale.com/3d7cf73a-5ccc-4484-ab35-61e36027e35f.jpg | IMAGE | https://au-hw-media-m.happywhale.com/3d7cf73a-5ccc-4484-ab35-61e36027e35f.jpg | 490517 | GENERAL |  | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.777235 | -121.859728 | True |  | 2024-09-02 | 09:43:48 |  | 09:43:48 | -07:00 | 1167911 | https://au-hw-media-t.happywhale.com/ef2ea0fd-b9ac-4abc-961b-47d03c74f46c.jpg | IMAGE | https://au-hw-media-m.happywhale.com/ef2ea0fd-b9ac-4abc-961b-47d03c74f46c.jpg | 488922 | PRECISE | CAMERA | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.835212 | -121.960648 | True |  | 2024-09-02 | 10:39:34 |  | 10:39:43 | -07:00 | 1167913 | https://au-hw-media-t.happywhale.com/7cd35652-0c06-4f8b-b0cf-d540a49a4f20.jpg | IMAGE | https://au-hw-media-m.happywhale.com/7cd35652-0c06-4f8b-b0cf-d540a49a4f20.jpg | 488923 | PRECISE | CAMERA | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
+36.835212 | -121.960648 | True |  | 2024-09-02 | 10:39:34 |  | 10:39:34 | -07:00 | 1167912 | https://au-hw-media-t.happywhale.com/52dc16d3-1a26-458e-b576-2cba8075487f.jpg | IMAGE | https://au-hw-media-m.happywhale.com/52dc16d3-1a26-458e-b576-2cba8075487f.jpg | 488924 | PRECISE | CAMERA | PUBLIC_DOMAIN | 1 | 1 | [None] | True | "California, United States" | humpback_whale | 1725228000000
