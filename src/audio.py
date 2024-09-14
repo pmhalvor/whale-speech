@@ -3,7 +3,7 @@ The code in this file is based off the notebook found at:
 https://docs.mbari.org/pacific-sound/notebooks/humpbackwhales/detect/PacificSoundDetectHumpbackSong/
 """
 from datetime import datetime, timedelta
-from six.moves.urllib.request import urlopen
+from six.moves.urllib.request import urlopen  # pyright: ignore
 from zoneinfo import ZoneInfo
 
 import io
