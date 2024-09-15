@@ -3,7 +3,7 @@
 This doc's purpose is to consider the different options for simple whale vocalization detection mechanisms.
 
 ## Background
-The purpose of this pipeline to is efficiently detect vocalizations from whales sighted on [HappyWhale](https://happywhale.com/). 
+The purpose of this pipeline to is efficiently detect vocalizations from whales encountered on [HappyWhale](https://happywhale.com/). 
 Since audio data is notoriously large, we want to quickly find which chunks of audio are most important to look at, before classifying them via the [humpback_whale model](https://tfhub.dev/google/humpback_whale/1).
 
 Initially, the data that does not make it past the filter will not be fed through the machine learning model, in order to keep costs down. 
@@ -68,7 +68,7 @@ This is a 2D representation of the audio signal, where the x-axis is time, y-axi
 
 
 ### Humpback Whale Model
-Final option is to just directly use the model on the data surronding a sighting. 
+Final option is to just directly use the model on the data surronding a encounter. 
 This is the most expensive option, but also the most accurate.
 
 #### Pros
@@ -82,7 +82,7 @@ This is the most expensive option, but also the most accurate.
 
 ## Decision
 No true decision has been made yet. 
-I want to run a few more experiments on sightsing different distances from the hydrophone, and see how the different filters perform.
+I want to run a few more experiments on encounters different distances from the hydrophone, and see how the different filters perform.
 The results fromt hat experiment can be documented here, and will help steer the decision.
 
  

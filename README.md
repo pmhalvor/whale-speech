@@ -1,5 +1,5 @@
 # 📣🐋 Whale Speech 
-A pipeline to map whale sightings to hydrophone audio.
+A pipeline to map whale encounters to hydrophone audio.
 ## Installation
 M1:
 ```bash
@@ -19,13 +19,13 @@ pip install -r requirements.txt
 ## Pipeline description
 
 Stages:
-1. **Input**: When (and where*) to look for whale sightings on [HappyWhale](https://happywhale.com/).
-2. **Geometry Search**: Query [open-oceans/happywhale](https://github.com/open-oceans/happywhale) to find potential whale sightings. 
-3. **Retrive Audio**: Download audio from MBARI's [Pacific Ocean Sound Recordings](https://registry.opendata.aws/pacific-sound/) around the time of the sighting. 
+1. **Input**: When (and where*) to look for whale encounters on [HappyWhale](https://happywhale.com/).
+2. **Geometry Search**: Query [open-oceans/happywhale](https://github.com/open-oceans/happywhale) to find potential whale encounters. 
+3. **Retrive Audio**: Download audio from MBARI's [Pacific Ocean Sound Recordings](https://registry.opendata.aws/pacific-sound/) around the time of the encounter. 
 4. **Filter Frequency**: Break audio into non-overlaping segments with flagged frequency detections. 
 5. **Classify Audio**: Use a NOAA and Google's [humpback_whale model](https://tfhub.dev/google/humpback_whale/1) to classify the flagged segments.
-6. **Postprocess Labels**: Build clip-intervals for each sighting for playback snippets.
-7. **Output**: Map the whale sighting ids to the playback snippets.
+6. **Postprocess Labels**: Build clip-intervals for each encounter for playback snippets.
+7. **Output**: Map the whale encounter ids to the playback snippets.
 
 
 <!-- Light mode -->
@@ -38,7 +38,7 @@ Stages:
 
 
 <sub>
-*Currently only support sightings around the Monterey Bay Hydrophone (<a href="https://www.mbari.org/technology/monterey-accelerated-research-system-mars/">MARS</a>).
+*Currently only support encounters around the Monterey Bay Hydrophone (<a href="https://www.mbari.org/technology/monterey-accelerated-research-system-mars/">MARS</a>).
 </sub>
 
 ## Resources 

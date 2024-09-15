@@ -8,7 +8,7 @@ pipeline:
     timezone: "America/Los_Angeles"
   
   search:
-    export_template: "data/sightings/{filename}-{timeframe}.csv"
+    export_template: "data/encounters/{filename}-{timeframe}.csv"
     filename: "monterey_bay_50km"
     geometery_file_path_template: "data/geo/{filename}.geojson"
     species: "humpback_whale"
@@ -27,7 +27,7 @@ pipeline:
     path_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
     filename_template: "MARS-{year}{month:02}{day:02}T000000Z-16kHz.wav"
     source_sample_rate: 16000
-    margin: 60  # 10 minutes
+    margin: 3600  
 
   detection_filter:
     highcut: 1500

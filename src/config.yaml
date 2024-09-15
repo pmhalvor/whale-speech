@@ -12,7 +12,7 @@ stages:
     species: "humpback_whale"
     start: "2016-12-21"
     end: "2016-12-21"
-    export_template: "{root_dir}/data/sightings/{filename}-{timeframe}.geojson"
+    export_template: "{root_dir}/data/encounters/{filename}-{timeframe}.geojson"
 
   audio:
     path_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"

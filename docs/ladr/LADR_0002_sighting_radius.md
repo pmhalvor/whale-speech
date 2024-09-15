@@ -1,11 +1,11 @@
-# Sighting Radius
-The size of the geojson polygon we are looking for whale sightings in can greatly effect the model performance. 
+# Encounter Radius
+The size of the geojson polygon we are looking for whale encounters in can greatly effect the model performance. 
 This document aims to find the optimal size of the radius. 
 Results from experimentation on different filters at different distance will be recorded here.
 
 ## Background
-From the manually picked sightings, we see that both the model and our filters struggle to pick up whale sounds, even when it is obvious to the human ear. 
-There are a range of reasons for this, but distance from the hydrophone is a major factor. (A manually picked sighting may not be as close to the hydrophone location as a programmatically chosen one.)
+From the manually picked encounters, we see that both the model and our filters struggle to pick up whale sounds, even when it is obvious to the human ear. 
+There are a range of reasons for this, but distance from the hydrophone is a major factor. (A manually picked encounter may not be as close to the hydrophone location as a programmatically chosen one.)
 
 ## Options
 
