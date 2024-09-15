@@ -12,7 +12,7 @@ CONFIG_FILE_PATH = os.path.join(
 
 
 # Function to load defaults from config file
-def load_config(config_file):
+def read_config(config_file):
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
     return config
@@ -29,11 +29,18 @@ def parse_args(config):
     return parser.parse_known_args()
 
 
-def update_config(config, args):
-    """Update the config dictionary with command-line arguments."""
-    for key, value in vars(args).items():
-        if value is not None:
-            config[key] = value
+def update_config(config):
+    """
+    Update the config dictionary with command-line arguments.
+    
+    NOTE: If conflicting parameter names, both cases 
+    will be updated with value from command-line arg.
+    """
+    for stage in config.keys():
+        args, _ = parse_args(config[stage])
+        for key, value in vars(args).items():
+            if value is not None:
+                config[stage][key] = value
     return config
 
 
@@ -55,10 +62,12 @@ def load_pipeline_config(config_file = CONFIG_FILE_PATH):
     NOTE: If conflicting parameter names, both cases 
     will be updated with value from command-line arg.
     """
-    config = load_config(config_file)["pipeline"]
-    for stage in config.keys():
-        args, _ = parse_args(config[stage])
-        config[stage] = update_config(config[stage], args)
+    config = read_config(config_file)["pipeline"]
+    config = update_config(config)
+
+    # add root dir
+    config["root_dir"] = os.path.dirname(os.path.join(os.path.abspath(__file__)))
+
     return dict_to_namespace(config)
 
 

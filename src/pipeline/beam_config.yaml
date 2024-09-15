@@ -8,10 +8,20 @@ pipeline:
     timezone: "America/Los_Angeles"
   
   search:
-    export_template: "{root_dir}/data/sightings/{filename}-{timeframe}.geojson"
+    export_template: "data/sightings/{filename}-{timeframe}.csv"
     filename: "monterey_bay_50km"
-    geometery_file_template: "{root_dir}/data/geo/{filename}.geojson"
+    geometery_file_path_template: "data/geo/{filename}.geojson"
     species: "humpback_whale"
+    columns:
+      - "id"
+      - "latitude"
+      - "longitude"
+      - "startDate"
+      - "startTime"
+      - "endDate"
+      - "endTime"
+      - "timezone"
+      - "displayImgUrl"
 
   audio:
     path_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
