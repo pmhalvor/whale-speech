@@ -81,8 +81,6 @@ This is the most expensive option, but also the most accurate.
 
 
 ## Decision
-No true decision has been made yet. 
-I want to run a few more experiments on encounters different distances from the hydrophone, and see how the different filters perform.
-The results fromt hat experiment can be documented here, and will help steer the decision.
-
- 
+Initially, I will use the Butterworth Bandpass Filter, as it is the most lightweight and specific of the options.
+From this, I'll gather results, and see if going straight to model would be better. 
+This doc will be updated with the results of the experiment.

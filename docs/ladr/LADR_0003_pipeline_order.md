@@ -31,7 +31,13 @@ Since I'm still learning this field, I need to make a decision on which stage to
 - Potenitally find new vocalization frequencies not currently covered by detection filters. 
 
 #### Cons
-- Not all whale encounters will have corresponding audio.
+- Not all whale encounters will have corresponding audio, i.e. "false positive".
 - More likely to find low scoring detections/ model scores
 - Distance from encounter can be too far from hydrophone, even when constraints are set.
     - TODO: Check if there are any restrictions on boating around the Monterey Bay Hydrophone.
+
+## Decision
+The initial plan will be to run encounter search first. 
+This may result in a lot of "false positives", but it will allow me to build the pipeline steps efficiently. 
+
+Updates to this document will be made after all the pipeline stages are built.

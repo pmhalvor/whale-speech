@@ -21,10 +21,25 @@ pip install -r requirements.txt
 Stages:
 1. **Input**: When (and where*) to look for whale encounters on [HappyWhale](https://happywhale.com/).
 2. **Geometry Search**: Query [open-oceans/happywhale](https://github.com/open-oceans/happywhale) to find potential whale encounters. 
+
+   &rarr; Expected outputs: encounter ids, start and end times, and longitude and latitude.
+
 3. **Retrive Audio**: Download audio from MBARI's [Pacific Ocean Sound Recordings](https://registry.opendata.aws/pacific-sound/) around the time of the encounter. 
+    
+    &rarr; Expected outputs: audio array, start and end times, and encounter ids.
+    
 4. **Filter Frequency**: Break audio into non-overlaping segments with flagged frequency detections. 
+        
+    &rarr; Expected outputs: cut audio array, detection intervals, and encounter ids.
+
 5. **Classify Audio**: Use a NOAA and Google's [humpback_whale model](https://tfhub.dev/google/humpback_whale/1) to classify the flagged segments.
+
+    &rarr; Expected outputs: resampled audio, classification score array, and encounter ids.
+
 6. **Postprocess Labels**: Build clip-intervals for each encounter for playback snippets.
+
+    &rarr; Expected outputs: encounter ids, cut/resampled audio array, and aggregated classification score.
+
 7. **Output**: Map the whale encounter ids to the playback snippets.
 
 
