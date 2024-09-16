@@ -1,3 +1,8 @@
+# Repo specific ignores
+audio/
+
+
+# Python basic ignores
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -183,7 +183,19 @@ class RetrieveAudio(beam.DoFn):
 
 
 class WriteAudio(beam.DoFn):
-    def process(self, element, start, end, file_path_prefix):
+    def process(self, element):
+        array = element[0]
+        start = element[1]
+        end = element[2]
+        encounter_ids = element[3]
+
+        file_path_prefix = "{date}-{start_time}-{end_time}-{ids}".format(
+            date=start.strftime("%Y%m%d"),
+            start_time=start.strftime("%H%M"),
+            end_time=end.strftime("%H%M"),
+            ids="_".join(encounter_ids)
+        )
+
         # Create a unique file name for each element
         filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
 
@@ -192,9 +204,12 @@ class WriteAudio(beam.DoFn):
             month=start.month,
             filename=filename
         )
-        
+
+        logging.info(f"Writing audio to {file_path}")
+        logging.info(f"Audio shape: {array.shape}")
+                
         # Write the numpy array to the file as .npy format
         with beam.io.filesystems.FileSystems.create(file_path) as f:
-            np.save(f, element)  # Save the numpy array in .npy format
+            np.save(f, array)  # Save the numpy array in .npy format
             
         yield file_path

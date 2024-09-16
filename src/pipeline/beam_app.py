@@ -18,8 +18,8 @@ def run():
 
         # For debugging, you can write the output to a text file
         audio_files =       audio_results   | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
-        audio_files     | "Write Audio Output"  >> beam.io.WriteToText('audio_files.txt')
-        search_results  | "Write Search Output" >> beam.io.WriteToText('search_results.txt')
+        # audio_files     | "Write Audio Output"  >> beam.io.WriteToText('audio_files.txt')
+        # search_results  | "Write Search Output" >> beam.io.WriteToText('search_results.txt')
 
 
         # # Filter Frequency based on the audio and classify it

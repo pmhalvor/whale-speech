@@ -28,7 +28,7 @@ pipeline:
     filename_template: "MARS-{year}{month:02}{day:02}T000000Z-16kHz.wav"
     source_sample_rate: 16000
     margin: 30 # 900 # seconds  
-    offset: 10
+    offset: 13
     output_path_template: "data/audio/{year}/{month:02}/{filename}"
 
   detection_filter:
