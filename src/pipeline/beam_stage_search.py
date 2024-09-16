@@ -1,7 +1,5 @@
-from apache_beam.dataframe.convert import to_pcollection
 from apache_beam.io import filesystems
 from config import load_pipeline_config
-from datetime import datetime
 from happywhale.happywhale import geometry_search
 
 import apache_beam as beam
@@ -27,10 +25,7 @@ class GeometrySearch(beam.DoFn):
 
         geometry_search(geometry_file, start,end, export_file, species)
 
-        results = self._postprocecss(export_file)
-
-        for row in results.to_dict(orient='records'):
-            yield row
+        yield self._postprocecss(export_file)
 
 
     def _preprocess_date(self, date_str):
@@ -67,11 +62,11 @@ class GeometrySearch(beam.DoFn):
         return export_filename
 
 
-    def _postprocecss(self, export_file):
+    def _postprocecss(self, export_file) -> pd.DataFrame:
         results = pd.read_csv(export_file)
 
         results = results[config.search.columns]
 
-        logging.info(f"Results: \n{results.head()}")
+        logging.info(f"Search results: \n{results.head()}")
 
         return results
