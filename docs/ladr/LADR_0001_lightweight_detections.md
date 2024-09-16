@@ -66,6 +66,31 @@ This is a 2D representation of the audio signal, where the x-axis is time, y-axi
 - not lightweight
 - more difficult to work with (2D data)
 
+### Distilled Student-Teacher model
+We could set up a lightweight NN classifier 
+that is trained from classifications.
+
+True positives would be time-frames that the 
+Google humpback model finds classifications in. 
+False positives are then detections time-frames with 
+low scoring pooled model confidence outputs. 
+False negatives are when the model found whales, 
+but the detection filter didn't. 
+True negatives are when both methods don't find 
+any whale prescence, i.e. most of the time. 
+
+#### Pros 
+- can be calibrated
+    - window size
+    - margin size
+    - confidence threshold
+    - etc
+- student may find the most obvious signs of whale
+
+#### Negative
+- requires training
+- requires parallel classifications of same audio -> "expensive"
+- many variables/ hyperparameters to tune 
 
 ### Humpback Whale Model
 Final option is to just directly use the model on the data surronding a encounter. 
