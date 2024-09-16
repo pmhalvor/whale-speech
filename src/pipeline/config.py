@@ -65,9 +65,6 @@ def load_pipeline_config(config_file = CONFIG_FILE_PATH):
     config = read_config(config_file)["pipeline"]
     config = update_config(config)
 
-    # add root dir
-    config["root_dir"] = os.path.dirname(os.path.join(os.path.abspath(__file__)))
-
     return dict_to_namespace(config)
 
 

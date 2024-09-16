@@ -18,7 +18,6 @@ pipeline:
       - "longitude"
       - "startDate"
       - "startTime"
-      - "endDate"
       - "endTime"
       - "timezone"
       - "displayImgUrl"

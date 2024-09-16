@@ -25,7 +25,7 @@ class GeometrySearch(beam.DoFn):
 
         geometry_search(geometry_file, start,end, export_file, species)
 
-        yield self._postprocecss(export_file)
+        yield self._postprocess(export_file)
 
 
     def _preprocess_date(self, date_str):
@@ -40,7 +40,6 @@ class GeometrySearch(beam.DoFn):
         """
         filename = config.search.filename
         geometry_filename = config.search.geometery_file_path_template.format(
-            # root_dir=os.path.join("..", "..", config.root_dir), 
             filename=filename
         )
         return io.BytesIO(filesystems.FileSystems.open(geometry_filename).read())
@@ -55,14 +54,13 @@ class GeometrySearch(beam.DoFn):
                 f"{start}-{end}"
                 if start != end
                 else start
-            ),
-            root_dir=config.root_dir
+            )
         )
 
         return export_filename
 
 
-    def _postprocecss(self, export_file) -> pd.DataFrame:
+    def _postprocess(self, export_file) -> pd.DataFrame:
         results = pd.read_csv(export_file)
 
         results = results[config.search.columns]

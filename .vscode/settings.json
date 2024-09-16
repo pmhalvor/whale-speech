@@ -3,5 +3,8 @@
         "activityBar.background": "#274cc4",
         "titleBar.activeBackground": "#2c5fd5",
         "titleBar.activeForeground": "#d3d8cb"
-    }
+    },
+    "python.analysis.extraPaths": [
+        "./src/pipeline"
+    ]
 }

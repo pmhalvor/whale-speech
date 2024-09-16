@@ -45,13 +45,13 @@ class RetrieveAudio(beam.DoFn):
 
 
     def _preprocess(self, df):
-        df = self.__build_time_frames(df)
-        df = self.__find_overlapping(df)
+        df = self._build_time_frames(df)
+        df = self._find_overlapping(df)
 
         return df
 
 
-    def __build_time_frames(self, df):
+    def _build_time_frames(self, df):
         margin = config.audio.margin
 
         df["startTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["startTime"].astype(str))
@@ -70,7 +70,7 @@ class RetrieveAudio(beam.DoFn):
         return df
     
     
-    def __find_overlapping(self, df):
+    def _find_overlapping(self, df):
         """
         Find overlapping time-frames and join the encounter ids.  
         """
