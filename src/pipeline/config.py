@@ -7,7 +7,7 @@ import yaml
 
 CONFIG_FILE_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 
-    'beam_config.yaml'
+    'config.yaml'
 )
 
 

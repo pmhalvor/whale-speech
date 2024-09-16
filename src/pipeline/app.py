@@ -1,8 +1,8 @@
 import apache_beam as beam
 
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
-from beam_stage_search import GeometrySearch
-from beam_stage_audio import RetrieveAudio, WriteAudio
+from stages.search import GeometrySearch
+from stages.audio import RetrieveAudio, WriteAudio
 
 
 def run():
@@ -14,7 +14,7 @@ def run():
         input_data =        p               | "Create Input"        >> beam.Create([{'start': '2016-12-21T00:30:0', 'end':"2016-12-21T00:40:0"}])  
         search_results =    input_data      | "Run Geometry Search" >> beam.ParDo(GeometrySearch())
         audio_results =     search_results  | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
-
+        # filtered_audio =    audio_results   | "Filter Frequency"    >> FilterFrequency()
 
         # For debugging, you can write the output to a text file
         audio_files =       audio_results   | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
@@ -22,8 +22,6 @@ def run():
         # search_results  | "Write Search Output" >> beam.io.WriteToText('search_results.txt')
 
 
-        # # Filter Frequency based on the audio and classify it
-        # filtered_audio = audio | "Filter Frequency" >> FilterFrequency()
         # classified_audio = filtered_audio | "Classify Audio" >> ClassifyAudio()
 
         # # Post-process the labels
