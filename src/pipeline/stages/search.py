@@ -19,7 +19,7 @@ class GeometrySearch(beam.DoFn):
         end = self._preprocess_date(element.get('end'))
         
         geometry_file = self._get_geometry_file()
-        export_file = self._get_export_file(start, end)
+        export_file = self._get_export_path(start, end)
 
         species = config.search.species
 
@@ -45,7 +45,7 @@ class GeometrySearch(beam.DoFn):
         return io.BytesIO(filesystems.FileSystems.open(geometry_filename).read())
     
     
-    def _get_export_file(self, start, end):
+    def _get_export_path(self, start, end):
         filename = config.search.filename
 
         export_filename = config.search.export_template.format(
