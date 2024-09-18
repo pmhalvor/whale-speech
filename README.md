@@ -1,5 +1,11 @@
 # 📣🐋 Whale Speech 
 A pipeline to map whale encounters to hydrophone audio.
+
+<sub>
+Derived from <a href="https://docs.mbari.org/pacific-sound/notebooks/humpbackwhales/detect/PacificSoundDetectHumpbackSong/"> PacificSoundDetectHumpbackSong</a>, though not directly affiliated with MBARI, NOAA, or HappyWhale.
+</sub>
+
+
 ## Installation
 M1:
 ```bash
