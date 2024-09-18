@@ -1,6 +1,7 @@
 from apache_beam.io import filesystems
 from datetime import timedelta, datetime
 from six.moves.urllib.request import urlopen  # pyright: ignore
+from typing import Tuple
 
 import apache_beam as beam
 import io
@@ -15,43 +16,105 @@ from config import load_pipeline_config
 config = load_pipeline_config()
 
 
-class RetrieveAudio(beam.DoFn):
-    def process(self, search_results):
+class AudioTask(beam.DoFn):
+        
+    def _save_audio(self, audio:np.array, file_path:str):
+        # Write the numpy array to the file as .npy format
+        with beam.io.filesystems.FileSystems.create(file_path) as f:
+            np.save(f, audio)  # Save the numpy array in .npy format
+
+        return file_path
+    
+    def _load_audio(self, file_path:str):
+        # Write the numpy array to the file as .npy format
+        with beam.io.filesystems.FileSystems.open(file_path) as f:
+            audio = np.load(f)
+
+        return audio
+    
+    def _get_export_path(
+            self,
+            start: datetime,
+            end: datetime,
+            encounter_ids: list[str],
+    ):
+
+        file_path_prefix = "{date}-{start_time}-{end_time}-{ids}".format(
+            date=start.strftime("%Y%m%d"),
+            start_time=start.strftime("%H%M"),
+            end_time=end.strftime("%H%M"),
+            ids="_".join(encounter_ids)
+        )
+
+        # Create a unique file name for each element
+        filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
+
+        file_path = config.audio.output_path_template.format(
+            year=start.year,
+            month=start.month,
+            filename=filename
+        )
+
+        return file_path
+
+    def _file_exists_for_input(self, 
+            start: datetime,
+            end: datetime,
+            encounter_ids: list[str]
+        ) -> bool:
+        file_path = self._get_export_path(start, end, encounter_ids)
+        return filesystems.FileSystems.exists(file_path)
+    
+
+class RetrieveAudio(AudioTask):
+    def process(self, search_results: pd.DataFrame):
         """
         Takes in seach results df with encounters of whale for input date,
         and retrieves the corresponding audio. 
 
         If time-stamps + margin are overlapping, join the encounter ids. 
         """
-
         preprocessed_df = self._preprocess(search_results)
-
-        logging.info(f"Preprocessed audio df: \n{preprocessed_df.head()}")
+        logging.debug(f"Preprocessed audio df: \n{preprocessed_df.head()}")
 
         # # Load the audio
         for row in preprocessed_df.itertuples():
             start_time = row.start_time
             end_time = row.end_time
 
-            logging.info(f"Loading audio for {start_time} to {end_time}")
-            audio, audio_seconds = self._load(
-                start_time,
-                end_time,
-                config.audio.source_sample_rate,
-            )
+            # check if audio already exists for this time-frame
+            if self._file_exists_for_input(start_time, end_time, row.encounter_ids):
+                audio_path = self._get_export_path(start_time, end_time, row.encounter_ids)
+                logging.info(f"Audio already exists for {start_time} to {end_time}")
+        
+                if config.audio.skip_existing:
+                    logging.info(f"Skipping downstream processing for {audio_path}")
+                    continue
+                else:
+                    logging.info(f"Loading audio from {audio_path}")
+                    audio = self._load_audio(audio_path)
+                    yield audio, start_time, end_time, row.encounter_ids
 
-            # Yield the audio and the search_results
-            yield audio, start_time, end_time, row.encounter_ids
+            else:
+                logging.info(f"Loading audio for {start_time} to {end_time}")
+                audio, _ = self._download_audio(
+                    start_time,
+                    end_time,
+                    config.audio.source_sample_rate,
+                )
+
+                # Yield the audio and the search_results
+                yield audio, start_time, end_time, row.encounter_ids
 
 
-    def _preprocess(self, df):
+    def _preprocess(self, df: pd.DataFrame):
         df = self._build_time_frames(df)
         df = self._find_overlapping(df)
 
         return df
 
 
-    def _build_time_frames(self, df):
+    def _build_time_frames(self, df: pd.DataFrame):
         margin = config.audio.margin
 
         df["startTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["startTime"].astype(str))
@@ -70,7 +133,7 @@ class RetrieveAudio(beam.DoFn):
         return df
     
     
-    def _find_overlapping(self, df):
+    def _find_overlapping(self, df: pd.DataFrame):
         """
         Find overlapping time-frames and join the encounter ids.  
         """
@@ -111,9 +174,9 @@ class RetrieveAudio(beam.DoFn):
 
     def _get_file_url(
             self,
-            year,
-            month,
-            day,
+            year: int,
+            month: int,
+            day: int,
         ):
         filename = str(config.audio.filename_template).format(year=year, month=month, day=day)
         url = config.audio.url_template.format(year=year, month=month, day=day, filename=filename)
@@ -121,7 +184,7 @@ class RetrieveAudio(beam.DoFn):
         return url
 
 
-    def _load(
+    def _download_audio(
             self,
             start_time: datetime,
             end_time: datetime,
@@ -158,7 +221,7 @@ class RetrieveAudio(beam.DoFn):
         tot_audio_bytes = 3 * tot_audio_samples    # 3 because audio is 24-bit
         max_file_size_dl = 1024 + tot_audio_bytes  # 1024 enough to cover file header
 
-        print(f'\n==> Loading segment from {year}-{month}-{day} @ \
+        logging.info(f'\n==> Loading segment from {year}-{month}-{day} @ \
                 {at_hour}h:{at_minute}m with duration {hours}h:{minutes}m')
         psound, _ = sf.read(io.BytesIO(urlopen(url).read(max_file_size_dl)), dtype='float32')
         # (sf.read also returns the sample rate but we already know it is 16_000)
@@ -182,34 +245,21 @@ class RetrieveAudio(beam.DoFn):
         return psound_segment, psound_segment_seconds
 
 
-class WriteAudio(beam.DoFn):
+class WriteAudio(AudioTask):
     def process(self, element):
+        # TODO refactor to properly handle typing
         array = element[0]
         start = element[1]
         end = element[2]
         encounter_ids = element[3]
 
-        file_path_prefix = "{date}-{start_time}-{end_time}-{ids}".format(
-            date=start.strftime("%Y%m%d"),
-            start_time=start.strftime("%H%M"),
-            end_time=end.strftime("%H%M"),
-            ids="_".join(encounter_ids)
-        )
-
-        # Create a unique file name for each element
-        filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
-
-        file_path = config.audio.output_path_template.format(
-            year=start.year,
-            month=start.month,
-            filename=filename
+        file_path = self._get_export_path(
+            start,
+            end,
+            encounter_ids,
         )
 
         logging.info(f"Writing audio to {file_path}")
         logging.info(f"Audio shape: {array.shape}")
-                
-        # Write the numpy array to the file as .npy format
-        with beam.io.filesystems.FileSystems.create(file_path) as f:
-            np.save(f, array)  # Save the numpy array in .npy format
-            
-        yield file_path
+        
+        yield self._save_audio(array, file_path)

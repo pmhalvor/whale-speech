@@ -26,9 +26,10 @@ pipeline:
     url_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
     filename_template: "MARS-{year}{month:02}{day:02}T000000Z-16kHz.wav"
     source_sample_rate: 16000
-    margin: 30 # 900 # seconds  
-    offset: 13
+    margin: 30 # TODO set to 900  # seconds  
+    offset: 13 # TODO set to 0    # hours
     output_path_template: "data/audio/{year}/{month:02}/{filename}"
+    skip_existing: false
 
   detection_filter:
     highcut: 1500
