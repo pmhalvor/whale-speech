@@ -34,7 +34,7 @@ def test_get_export_file(sample_element):
     expected = "data/encounters/monterey_bay_50km-2024-07-08.csv"
 
     # Act
-    actual = GeometrySearch()._get_export_file(start, end)
+    actual = GeometrySearch()._get_export_path(start, end)
 
     # Assert
     assert actual == expected
