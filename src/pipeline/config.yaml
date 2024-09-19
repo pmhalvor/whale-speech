@@ -1,6 +1,7 @@
 pipeline:
   general:
     verbose: true
+    debug: true
 
   input:
     start: "2016-12-21T00:30:00"
@@ -28,15 +29,23 @@ pipeline:
     source_sample_rate: 16000
     margin: 30 # TODO set to 900  # seconds  
     offset: 13 # TODO set to 0    # hours
-    output_path_template: "data/audio/{year}/{month:02}/{filename}"
-    skip_existing: false
+    output_path_template: "data/audio/raw/{year}/{month:02}/{filename}"
+    skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
 
-  detection_filter:
-    highcut: 1500
-    lowcut: 50
-    order: 10
-    frequency_threshold: 0.015
+  sift:
+    output_path_template: "data/audio/{sift_type}/{year}/{month:02}/{day:02}/{filename}"
+    max_duration: 600  # seconds
+    plot: true
+    plot_path_template: "data/plots/{sift_type}/{year}/{month:02}/{day:02}/{plot_name}.png"
     window_size: 512
+
+    # Specific sift-mechanism parameters
+    butterworth:
+      highcut: 1500
+      lowcut: 50
+      order: 10
+      output: "sos"  # "sos" or "ba" 
+      peak_threshold: 0.015
 
   model:
     url: https://tfhub.dev/google/humpback_whale/1
