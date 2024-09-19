@@ -1,6 +1,7 @@
 # Lightweight Detection Mechanisms
 
 This doc's purpose is to consider the different options for simple whale vocalization detection mechanisms.
+The chosen mechanism will sift through the large audio data, to find the most interesting parts to feed into the machine learning model.
 
 ## Background
 The main goal of this pipeline to is efficiently detect vocalizations from whales encountered on [HappyWhale](https://happywhale.com/). 
@@ -16,17 +17,18 @@ I'm still learning about different options, so this doc will be updated as I lea
 ### Energy filter
 Simplest of filters. Just measures peaks in audio signal, above a specified threshold.
 We would need to normalize then threshold the audio signal to detect peaks.
+Could also do a root mean square (RMS) over a short window to detect high energy sections. 
 
 #### Pros
 - very lightweight
 - easy to implement
 
 #### Cons
-- too much noise can make it through
+- too much noise will make it through
 - not very specific
 - prioritizes loudness over frequency
 - sounds from a distance will likely not be detected
-- too rudiementary, but good starting point for brainstorming
+- too rudiementary alone, but good to combine w/ frequency filters for example
 
 
 ### [Butterworth Passband Filter](https://en.wikipedia.org/wiki/Butterworth_filter)
@@ -34,10 +36,16 @@ We would need to normalize then threshold the audio signal to detect peaks.
 Filters out audio that does not contain a certain frequency range.
 Only allows a particular band of frequencies to pass through. 
 These are determined via the filter's order and cutoff frequencies, low and high.
-If the audio over a specified time window contains frequencies inside of the band, it is flagged.
+The order of the filter determines how steep the roll-off is, i.e. how "boxy" the filter is.
+The higher the order, the steeper the roll-off, and the sharper the corners of the top of the filter.
 
 ![bandpass filter](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bandwidth.svg/320px-Bandwidth.svg.png)
+
+For our use case, we want to find audio with frequencies matching expected whale vocalization frequencies. 
+If the audio over a specified time window contains frequencies inside of the band, it is flagged as a detection.
 ![detections](../../img/detections.png)
+
+To get this most out of this type of filter, we would likely need to use a handful of them, each focusing on their own frequency range.
 
 #### Pros 
 - more specific than energy filter
@@ -57,10 +65,13 @@ If the audio over a specified time window contains frequencies inside of the ban
 - not great at detecting vocalizations from a distance
 
 
-### [Chebyshev_filter](https://en.wikipedia.org/wiki/Chebyshev_filter)
+### [Chebyshev Passband Filter](https://en.wikipedia.org/wiki/Chebyshev_filter)
 Slightly more complex than the Butterworth filter, but with a steeper roll-off.
 The Chebyshev filter has a ripple in the passband, which can be tuned to be more or less aggressive. 
 It can also handle removing specific frequencies in the stopband, for example a ship's engine noise.
+
+![chebyshev](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/ChebyshevII_response-en.svg/2880px-ChebyshevII_response-en.svg.png)
+
 
 #### Pros
 - more specific than Butterworth
@@ -75,9 +86,9 @@ It can also handle removing specific frequencies in the stopband, for example a 
 - ...
 
 
-### Spectrogram
-A visual representation of the spectrum of frequencies of a signal as it varies with time.
-This is a 2D representation of the audio signal, where the x-axis is time, y-axis is frequency, and color is amplitude.
+### [Spectrogram](https://en.wikipedia.org/wiki/Spectrogram)
+A [short-time Fourier transform](https://en.wikipedia.org/wiki/Short-time_Fourier_transform), which visualizes the frequencies of a signal as it varies with time.
+This is a 3D representation of the audio signal, where the x-axis is time, y-axis is frequency, and color is energy of that frequency.
 
 ![spectrogram](../../img/spectrogram.png) 
 
