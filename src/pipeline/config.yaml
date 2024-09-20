@@ -43,9 +43,9 @@ pipeline:
     butterworth:
       highcut: 1500
       lowcut: 50
-      order: 10
+      order: 5
       output: "sos"  # "sos" or "ba" 
-      peak_threshold: 0.015
+      threshold: 0.015
 
   model:
     url: https://tfhub.dev/google/humpback_whale/1
