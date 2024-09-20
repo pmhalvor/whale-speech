@@ -5,6 +5,7 @@ from scipy.signal import butter, lfilter, find_peaks, sosfilt
 import apache_beam as beam
 import io
 import logging
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -35,10 +36,6 @@ class BaseSift(beam.PTransform):
     plot                = config.sift.plot
     plot_path_template  = config.sift.plot_path_template
 
-    def __init__(self, args: dict):
-        self.start = datetime.strptime(args.get('start'), "%Y-%m-%dT%H:%M:%S")
-        self.end = datetime.strptime(args.get('end'), "%Y-%m-%dT%H:%M:%S")
-
     def _build_key(
             self,
             start_time: datetime,
@@ -48,7 +45,7 @@ class BaseSift(beam.PTransform):
         start_str = start_time.strftime('%Y%m%dT%H%M%S')
         end_str = end_time.strftime('%H%M%S')
         encounter_str = "_".join(encounter_ids)
-        return f"{start_str}_{end_str}_{encounter_str}"
+        return f"{start_str}-{end_str}_{encounter_str}"
 
     def _preprocess(self, pcoll):
         """
@@ -58,10 +55,15 @@ class BaseSift(beam.PTransform):
         key = self._build_key(start, end, encounter_ids)
 
         max_samples = self.max_duration * self.sample_rate
+
         if signal.shape[0] > max_samples:
-            signal_batches = np.array_split(signal, signal.shape[0] // max_samples)
+            logging.debug(f"Signal size exceeds max sample size {max_samples}.")
+            split_indices = [max_samples*(i+1) for i  in range(math.floor(signal.shape[0] / max_samples))]
+            signal_batches = np.array_split(signal, split_indices)
+            logging.debug(f"Split signal into {len(signal_batches)} batches")
+
             for batch in signal_batches:
-                yield batch
+                yield (key, batch)
         else:
             yield (key, signal)
 
@@ -74,34 +76,29 @@ class BaseSift(beam.PTransform):
         logging.info(f"Min-max detections: {min_max_detections}")
         logging.info(f"Key: {key}")
 
-        first_detection = min_max_detections[key]["min"]
-        last_detection = min_max_detections[key]["max"]
-        global_detection_range = self._seconds_to_sample([first_detection, last_detection])
+        global_detection_range = [
+            min_max_detections[key]["min"], 
+            min_max_detections[key]["max"]
+        ]
 
-        return signal[global_detection_range[0]:global_detection_range[-1]]
+        return signal[global_detection_range[0]:global_detection_range[-1]], start, end, encounter_ids
 
-    def _seconds_to_sample(self, seconds):
-        return np.array([int(s*self.sample_rate) for s in seconds])
-    
     def _plot_signal_detections(self, pcoll, min_max_detections, all_detections, params=None):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
         
         logging.info(f"min-max detections: {min_max_detections}")
-        min_max_detection_times = [
+        min_max_detection_samples = [
             min_max_detections[key]["min"],  # maually fix ordering
             min_max_detections[key]["max"]
         ]
-        min_max_detection_samples = self._seconds_to_sample(min_max_detection_times)
 
-        logging.info(f"All detections: {all_detections}")
-        all_detection_samples = self._seconds_to_sample(all_detections[key])
 
         logging.info(f"Plotting signal detections: {min_max_detection_samples}")
         
         # datetime format matches original audio file name
         plot_path = self.plot_path_template.format(
-            sift_type=self.name,
+            sift=self.name,
             year=start.year,
             month=start.month,
             day=start.day,
@@ -130,10 +127,9 @@ class BaseSift(beam.PTransform):
                 zorder=7, # on top of all detections
             )
         
-        
-        if len(all_detection_samples):
+        if len(all_detections[key]):
             # shade window that resulted in detection
-            for detection in all_detection_samples:
+            for detection in all_detections[key]:
                 plt.axvspan(
                     detection - self.window_size/2,
                     detection + self.window_size/2,
@@ -158,14 +154,19 @@ class BaseSift(beam.PTransform):
 class Butterworth(BaseSift):
     name = "Butterworth"
 
-    # define bandpass
-    lowcut  = config.sift.butterworth.lowcut
-    highcut = config.sift.butterworth.highcut
-    order   = config.sift.butterworth.order
-    output  = config.sift.butterworth.output
-    
-    # apply bandpass
-    threshold  = config.sift.butterworth.threshold
+    def __init__(self):
+        super().__init__()
+
+        # define bandpass
+        self.lowcut  = config.sift.butterworth.lowcut
+        self.highcut = config.sift.butterworth.highcut
+        self.order   = config.sift.butterworth.order
+        self.output  = config.sift.butterworth.output
+
+        # apply bandpass
+        self.sift_threshold  = config.sift.butterworth.sift_threshold
+
+
 
     def expand(self, pcoll):
         """
@@ -195,7 +196,7 @@ class Butterworth(BaseSift):
                     "lowcut": self.lowcut,
                     "highcut": self.highcut,
                     "order": self.order,
-                    "threshold": self.threshold,
+                    "threshold": self.sift_threshold,
                 }
             )
 
@@ -240,14 +241,17 @@ class Butterworth(BaseSift):
         logging.debug(f"Normalized energy: {energy}")
 
         # Find peaks above threshold
-        peaks, _ = find_peaks(energy, height=self.threshold)
+        peaks, _ = find_peaks(energy, height=self.sift_threshold)
         logging.debug(f"Peaks: {peaks}")
 
-        # Convert peak indices to time
-        peak_times = peaks * (self.window_size / self.sample_rate)
-        logging.debug(f"Peak times: {peak_times}")
+        logging.info(f"shape peaks {peaks.shape}")
 
-        yield (key, peak_times)
+        # Convert peak indices to time
+        peak_samples = peaks * (self.window_size)
+        # peak_times = peaks * (self.window_size / self.sample_rate)
+        # logging.debug(f"Peak times: {peak_times}")
+
+        yield (key, peak_samples)
 
 
 class ListCombine(beam.CombineFn):

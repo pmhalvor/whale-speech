@@ -1,5 +1,6 @@
 from apache_beam.io import filesystems
 from datetime import timedelta, datetime
+from functools import partial
 from six.moves.urllib.request import urlopen  # pyright: ignore
 from typing import Tuple
 
@@ -276,5 +277,11 @@ class WriteAudio(AudioTask):
 
 
 class WriteSiftedAudio(WriteAudio):
-    output_path_template    = config.sift.output_path_template    
+    output_path_template = config.sift.output_path_template
+
+    def __init__(self, sift="sift"):
+        super().__init__()
+        self.output_path_template = self.output_path_template.replace("{sift}", sift)
+        logging.info(f"Sifted output path template: {self.output_path_template}")
+    
     # everything is used from WriteAudio

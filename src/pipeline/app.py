@@ -2,7 +2,7 @@ import apache_beam as beam
 
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
 from stages.search import GeometrySearch
-from stages.audio import RetrieveAudio, WriteAudio
+from stages.audio import RetrieveAudio, WriteAudio, WriteSiftedAudio
 from stages.sift import Butterworth
 
 from config import load_pipeline_config
@@ -24,7 +24,8 @@ def run():
         audio_results     = search_results  | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
         audio_files       = audio_results   | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
 
-        sifted_audio      = audio_results   | "Sift Audio"          >> Butterworth(args)
+        sifted_audio      = audio_results   | "Sift Audio"          >> Butterworth()
+        sifted_audio_files = sifted_audio   | "Store Sifted Audio"  >> beam.ParDo(WriteSiftedAudio("butterworth"))
 
         # For debugging, you can write the output to a text file
         # audio_files     | "Write Audio Output"  >> beam.io.WriteToText('audio_files.txt')
