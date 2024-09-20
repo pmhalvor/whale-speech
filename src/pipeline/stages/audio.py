@@ -19,12 +19,15 @@ config = load_pipeline_config()
 class AudioTask(beam.DoFn):
     debug                   = config.general.debug
     filename_template       = config.audio.filename_template
-    margin                  = config.audio.margin
-    offset                  = config.audio.offset
     output_path_template    = config.audio.output_path_template
     skip_existing           = config.audio.skip_existing
     source_sample_rate      = config.audio.source_sample_rate
     url_template            = config.audio.url_template
+
+    def __init__(self):
+        # init certrain attributes for mockable testing
+        self.margin = config.audio.margin
+        self.offset = config.audio.offset
         
     def _save_audio(self, audio:np.array, file_path:str):
         # Write the numpy array to the file as .npy format
@@ -131,9 +134,8 @@ class RetrieveAudio(AudioTask):
         df["end_time"] = df.endTime + timedelta(seconds=margin)
 
         # TODO remove this. Only use during development
-        if self.debug:
-            df["start_time"] = df["start_time"] - timedelta(hours=self.offset)
-            df["end_time"] = df["end_time"] - timedelta(hours=self.offset)
+        df["start_time"] = df["start_time"] - timedelta(hours=self.offset)
+        df["end_time"] = df["end_time"] - timedelta(hours=self.offset)
 
         assert pd.api.types.is_datetime64_any_dtype(df["start_time"])
         assert pd.api.types.is_datetime64_any_dtype(df["end_time"])
@@ -276,4 +278,3 @@ class WriteAudio(AudioTask):
 class WriteSiftedAudio(WriteAudio):
     output_path_template    = config.sift.output_path_template    
     # everything is used from WriteAudio
-    

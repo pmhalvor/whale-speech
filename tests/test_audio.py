@@ -31,7 +31,6 @@ def sample_time_frame_df():
     return pd.DataFrame(data)
 
 
-
 @patch('stages.audio.config')
 def test_build_time_frames(mock_config, sample_search_results_df):
     # Assemble
@@ -78,8 +77,8 @@ def test_find_overlapping(sample_time_frame_df):
 def test_preprocess(mock_config, sample_search_results_df):
     # Assemble
     # mock config values to avoid failing tests on config changes
-    mock_config.audio.margin = 5 * 60 # 5 minutes
-    mock_config.audio.offset = 1  # 1 hour # TODO remove. only used for development
+    mock_config.audio.margin = 5 * 60   # 5 minutes
+    mock_config.audio.offset = 1        # 1 hour # TODO remove. only used for development
 
     expected_df = pd.DataFrame({
         'encounter_ids':[["1"], ["3", "2"]],
