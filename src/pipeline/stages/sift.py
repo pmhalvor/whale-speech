@@ -60,7 +60,8 @@ class BaseSift(beam.PTransform):
             logging.debug(f"Signal size exceeds max sample size {max_samples}.")
             split_indices = [max_samples*(i+1) for i  in range(math.floor(signal.shape[0] / max_samples))]
             signal_batches = np.array_split(signal, split_indices)
-            logging.debug(f"Split signal into {len(signal_batches)} batches")
+            logging.debug(f"Split signal into {len(signal_batches)} batches of size {max_samples}.")
+            logging.debug(f"Size fo final batch {len(signal_batches[1])}")
 
             for batch in signal_batches:
                 yield (key, batch)
@@ -154,17 +155,27 @@ class BaseSift(beam.PTransform):
 class Butterworth(BaseSift):
     name = "Butterworth"
 
-    def __init__(self):
+    def __init__(
+            self,
+            lowcut: int = None,
+            highcut: int = None,
+            order: int = None,
+            output: str = None,
+            sift_threshold: float = None,
+        ):
         super().__init__()
 
         # define bandpass
-        self.lowcut  = config.sift.butterworth.lowcut
-        self.highcut = config.sift.butterworth.highcut
-        self.order   = config.sift.butterworth.order
-        self.output  = config.sift.butterworth.output
+        self.lowcut  = config.sift.butterworth.lowcut if not lowcut else lowcut
+        self.highcut = config.sift.butterworth.highcut if not highcut else highcut
+        self.order   = config.sift.butterworth.order if not order else order
+        self.output  = config.sift.butterworth.output if not output else output
 
         # apply bandpass
-        self.sift_threshold  = config.sift.butterworth.sift_threshold
+        self.sift_threshold  = (
+            config.sift.butterworth.sift_threshold 
+            if not sift_threshold else sift_threshold
+        )
 
 
 
@@ -244,12 +255,20 @@ class Butterworth(BaseSift):
         peaks, _ = find_peaks(energy, height=self.sift_threshold)
         logging.debug(f"Peaks: {peaks}")
 
-        logging.info(f"shape peaks {peaks.shape}")
 
         # Convert peak indices to time
         peak_samples = peaks * (self.window_size)
+        logging.info(f"Peak samples: {peak_samples}")
         # peak_times = peaks * (self.window_size / self.sample_rate)
         # logging.debug(f"Peak times: {peak_times}")
+
+        # # generate test data
+        # peak1 = peak_samples[0]
+        # start_idx = (peak1 // self.window_size) * self.window_size
+        # end_idx = start_idx + self.window_size
+
+        # sample_signal = signal[start_idx:end_idx]
+        # np.save(f"tests/data/{key}_sample_signal.npy", sample_signal)
 
         yield (key, peak_samples)
 
