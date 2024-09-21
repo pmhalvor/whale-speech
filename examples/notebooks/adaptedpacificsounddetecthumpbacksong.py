@@ -461,7 +461,6 @@ plot_results(
 
 """## Filters
 
-### Me
 I want to play around with different filters for the whale noises.
 Applying the filter to the signal will allow me to emphasize some signals, and mitigate others.
 """
@@ -477,29 +476,29 @@ Applying the filter to the signal will allow me to emphasize some signals, and m
     sample_rate = sample_rate,
 )
 
-def low_pass(
+def average_filter(
     signal = signal,
-    factor = 0.01,
     size = 100,
+    factor = 0.1,
 ):
-    low_pass_filter = np.ones(size)*factor
-    filtered_signal = np.convolve(signal, low_pass_filter)
+    average_array = (np.ones(size)/size)*factor
+    filtered_signal = np.convolve(signal, average_array)
     return filtered_signal
 
 
 factor = 0.1
 size = 100
 
-filtered_signal = low_pass(signal, factor=factor, size=size)
+filtered_signal = average_filter(signal, factor=factor, size=size)
 # plot_play(filtered_signal, title=f"Low-pass filter -  factor:{factor} size:{size}")
 
 factor = 0.1
 size = 10
 
-filtered_signal = low_pass(signal, factor=factor, size=size)
+filtered_signal = average_filter(signal, factor=factor, size=size)
 # plot_play(filtered_signal, title=f"Low-pass filter -  factor:{factor} size:{size}")
 
-"""### Claude"""
+"""### Ask an agent"""
 
 (
     sample_start,

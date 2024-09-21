@@ -1,5 +1,6 @@
 from apache_beam.io import filesystems
 from datetime import timedelta, datetime
+from functools import partial
 from six.moves.urllib.request import urlopen  # pyright: ignore
 from typing import Tuple
 
@@ -17,6 +18,17 @@ config = load_pipeline_config()
 
 
 class AudioTask(beam.DoFn):
+    debug                   = config.general.debug
+    filename_template       = config.audio.filename_template
+    output_path_template    = config.audio.output_path_template
+    skip_existing           = config.audio.skip_existing
+    source_sample_rate      = config.audio.source_sample_rate
+    url_template            = config.audio.url_template
+
+    def __init__(self):
+        # init certrain attributes for mockable testing
+        self.margin = config.audio.margin
+        self.offset = config.audio.offset
         
     def _save_audio(self, audio:np.array, file_path:str):
         # Write the numpy array to the file as .npy format
@@ -39,17 +51,17 @@ class AudioTask(beam.DoFn):
             encounter_ids: list[str],
     ):
 
-        file_path_prefix = "{date}-{start_time}-{end_time}-{ids}".format(
+        file_path_prefix = "{date}T{start_time}-{end_time}-{ids}".format(
             date=start.strftime("%Y%m%d"),
-            start_time=start.strftime("%H%M"),
-            end_time=end.strftime("%H%M"),
+            start_time=start.strftime("%H%M%S"),
+            end_time=end.strftime("%H%M%S"),
             ids="_".join(encounter_ids)
         )
 
         # Create a unique file name for each element
         filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
 
-        file_path = config.audio.output_path_template.format(
+        file_path = self.output_path_template.format(
             year=start.year,
             month=start.month,
             filename=filename
@@ -86,8 +98,7 @@ class RetrieveAudio(AudioTask):
             if self._file_exists_for_input(start_time, end_time, row.encounter_ids):
                 audio_path = self._get_export_path(start_time, end_time, row.encounter_ids)
                 logging.info(f"Audio already exists for {start_time} to {end_time}")
-        
-                if config.audio.skip_existing:
+                if self.skip_existing:
                     logging.info(f"Skipping downstream processing for {audio_path}")
                     continue
                 else:
@@ -100,7 +111,7 @@ class RetrieveAudio(AudioTask):
                 audio, _ = self._download_audio(
                     start_time,
                     end_time,
-                    config.audio.source_sample_rate,
+                    self.source_sample_rate,
                 )
 
                 # Yield the audio and the search_results
@@ -115,7 +126,7 @@ class RetrieveAudio(AudioTask):
 
 
     def _build_time_frames(self, df: pd.DataFrame):
-        margin = config.audio.margin
+        margin = self.margin
 
         df["startTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["startTime"].astype(str))
         df["endTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["endTime"].astype(str))
@@ -123,9 +134,9 @@ class RetrieveAudio(AudioTask):
         df["start_time"] = df.startTime - timedelta(seconds=margin)
         df["end_time"] = df.endTime + timedelta(seconds=margin)
 
-        # offset TODO remove this. Only testing for now
-        df["start_time"] = df["start_time"] - timedelta(hours=config.audio.offset)
-        df["end_time"] = df["end_time"] - timedelta(hours=config.audio.offset)
+        # TODO remove this. Only use during development
+        df["start_time"] = df["start_time"] - timedelta(hours=self.offset)
+        df["end_time"] = df["end_time"] - timedelta(hours=self.offset)
 
         assert pd.api.types.is_datetime64_any_dtype(df["start_time"])
         assert pd.api.types.is_datetime64_any_dtype(df["end_time"])
@@ -178,8 +189,8 @@ class RetrieveAudio(AudioTask):
             month: int,
             day: int,
         ):
-        filename = str(config.audio.filename_template).format(year=year, month=month, day=day)
-        url = config.audio.url_template.format(year=year, month=month, day=day, filename=filename)
+        filename = str(self.filename_template).format(year=year, month=month, day=day)
+        url = self.url_template.format(year=year, month=month, day=day, filename=filename)
 
         return url
 
@@ -263,3 +274,14 @@ class WriteAudio(AudioTask):
         logging.info(f"Audio shape: {array.shape}")
         
         yield self._save_audio(array, file_path)
+
+
+class WriteSiftedAudio(WriteAudio):
+    output_path_template = config.sift.output_path_template
+
+    def __init__(self, sift="sift"):
+        super().__init__()
+        self.output_path_template = self.output_path_template.replace("{sift}", sift)
+        logging.info(f"Sifted output path template: {self.output_path_template}")
+    
+    # everything is used from WriteAudio
