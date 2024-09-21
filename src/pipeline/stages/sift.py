@@ -73,9 +73,9 @@ class BaseSift(beam.PTransform):
         key = self._build_key(start, end, encounter_ids)
 
         logging.info(f"Postprocessing {self.name} sifted signal.")
-        logging.info(f"Signal: {signal}")
-        logging.info(f"Min-max detections: {min_max_detections}")
-        logging.info(f"Key: {key}")
+        logging.debug(f"Signal: {signal}")
+        logging.debug(f"Min-max detections: {min_max_detections}")
+        logging.debug(f"Key: {key}")
 
         global_detection_range = [
             min_max_detections[key]["min"], 
@@ -88,13 +88,10 @@ class BaseSift(beam.PTransform):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
         
-        logging.info(f"min-max detections: {min_max_detections}")
         min_max_detection_samples = [
             min_max_detections[key]["min"],  # maually fix ordering
             min_max_detections[key]["max"]
         ]
-
-
         logging.info(f"Plotting signal detections: {min_max_detection_samples}")
         
         # datetime format matches original audio file name
@@ -178,7 +175,6 @@ class Butterworth(BaseSift):
         )
 
 
-
     def expand(self, pcoll):
         """
         pcoll: tuple(audio, start_time, end_time, row.encounter_ids)
@@ -228,7 +224,7 @@ class Butterworth(BaseSift):
         ):
         key, signal = batch
 
-        logging.info(f"Start frequency detection on (key, signal): {(key, signal)}")
+        logging.info(f"Start frequency detection on (key, signal): {(key, signal.shape)}")
 
         # Apply bandpass filter
         butter_coeffients = self._butter_bandpass()
@@ -255,20 +251,9 @@ class Butterworth(BaseSift):
         peaks, _ = find_peaks(energy, height=self.sift_threshold)
         logging.debug(f"Peaks: {peaks}")
 
-
         # Convert peak indices to time
         peak_samples = peaks * (self.window_size)
-        logging.info(f"Peak samples: {peak_samples}")
-        # peak_times = peaks * (self.window_size / self.sample_rate)
-        # logging.debug(f"Peak times: {peak_times}")
-
-        # # generate test data
-        # peak1 = peak_samples[0]
-        # start_idx = (peak1 // self.window_size) * self.window_size
-        # end_idx = start_idx + self.window_size
-
-        # sample_signal = signal[start_idx:end_idx]
-        # np.save(f"tests/data/{key}_sample_signal.npy", sample_signal)
+        logging.debug(f"Peak samples: {peak_samples}")
 
         yield (key, peak_samples)
 
@@ -284,7 +269,7 @@ class ListCombine(beam.CombineFn):
         Key is not available in this method, 
         though inputs are only added to accumulator under correct key.
         """
-        logging.info(f"Adding input {input} to {self.name} accumulator.")
+        logging.debug(f"Adding input {input} to {self.name} accumulator.")
         if isinstance(input, np.ndarray):
             input = input.tolist()
         accumulator += input
