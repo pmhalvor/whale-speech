@@ -27,6 +27,19 @@ def sample_audio_results_row():
     yield  audio, start_time, end_time, encounter_ids
 
 
+@pytest.fixture
+def sample_batch():
+    """
+    Cherry picked example data with a sginal that has butterowrth detection w/ params:
+    - lowcut = 50
+    - highcut = 1500
+    - order = 2
+    
+    """
+    signal = np.load("tests/data/20161221T004930-005030-9182.npy")
+    key = "20161221T004930-005030-9182"
+    return (key, signal)
+
 
 def test_build_key(sample_audio_results_row):
     # Assemble
@@ -49,11 +62,11 @@ def test_preprocess(sample_audio_results_row):
     ]
 
     # Act
-    actual_data_yielded = Butterworth()._preprocess(sample_audio_results_row)
+    actual_data_generator = Butterworth()._preprocess(sample_audio_results_row)
 
     # Assert
     for expected in expected_data:
-        actual = next(actual_data_yielded)  # unload generator
+        actual = next(actual_data_generator)  # unload generator
 
         assert expected[0] == actual[0] # key
         assert expected[1].shape == actual[1].shape # data
@@ -82,18 +95,45 @@ def test_postprocess(sample_audio_results_row):
         assert np.array_equal(expected, actual)
 
 
-# @patch('stages.sift.config')
-# def test_butter_bandpass(mock_config):
-#     # Assemble
-#     mock_config.sift.lowcut = 50
-#     mock_config.sift.highcut = 1500
-#     mock_config.sift.order = 5
-#     mock_config.sift.sift_threshold = 0.015
-#     mock_config.sift.output = "sos"
+@patch('stages.sift.config')
+def test_butter_bandpass(mock_config):
+    # Assemble
+    mock_config.sift.butterworth.lowcut = 50
+    mock_config.sift.butterworth.highcut = 1500
+    mock_config.sift.butterworth.order = 2
+    mock_config.sift.butterworth.output = "sos"
 
-#     expected = "dont know yet"
+    expected_coefficients = [
+        [ 0.05711683,  0.11423366,  0.05711683,  1.        , -1.22806805,         0.4605427 ],
+        [ 1.        , -2.        ,  1.        ,  1.        , -1.97233136,         0.97273604]
+    ]
 
-#     actual = Butterworth()._butter_bandpass()
+    actual_coefficients = Butterworth()._butter_bandpass()
 
-#     print(actual)
-#     assert expected == actual
+    # Assert
+    assert len(actual_coefficients) == 2  # order
+    assert np.allclose(expected_coefficients, actual_coefficients)
+
+
+@patch('stages.sift.config')
+def test_frequency_filter_sift(mock_config, sample_batch):
+    # Assemble
+    mock_config.sift.butterworth.lowcut = 50
+    mock_config.sift.butterworth.highcut = 1500 
+    mock_config.sift.butterworth.order = 5
+    mock_config.sift.butterworth.output = "sos"
+    mock_config.sift.butterworth.sift_threshold = 0.015
+
+    expected_detections = (
+        "20161221T004930-005030-9182", 
+        np.array([13824])
+    )
+
+    # Act
+    actual_detections_generator = Butterworth()._frequency_filter_sift(sample_batch)
+    actual_detections = next(actual_detections_generator)
+
+
+    # Assert
+    assert expected_detections[0] == actual_detections[0]
+    np.allclose(expected_detections[1], actual_detections[1])
