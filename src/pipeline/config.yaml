@@ -47,10 +47,13 @@ pipeline:
       output: "sos"  # "sos" or "ba" 
       sift_threshold: 0.015
 
-  model:
-    url: https://tfhub.dev/google/humpback_whale/1
-    model_sample_rate: 10000
+  classify:
+    backend: "tensorflow"
     hydrophone_sensitivity: -168.8
+    batch_duration:  600  # seconds
+    model_sample_rate: 10000
+    plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
+    url: https://tfhub.dev/google/humpback_whale/1
 
   postprocess:
     min_gap: 60  # 1 minute

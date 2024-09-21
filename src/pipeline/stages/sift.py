@@ -174,7 +174,6 @@ class Butterworth(BaseSift):
             if not sift_threshold else sift_threshold
         )
 
-
     def expand(self, pcoll):
         """
         pcoll: tuple(audio, start_time, end_time, row.encounter_ids)
