@@ -3,13 +3,17 @@ import apache_beam as beam
 from datetime import datetime
 from typing import Dict, Any
 from types import SimpleNamespace
+from matplotlib import gridspec
 
 import librosa
 import logging
 import numpy as np
+import os 
 
 import requests
 import math 
+import matplotlib.pyplot as plt
+import scipy.signal
 
 
 logging.getLogger().setLevel(logging.INFO)
@@ -25,6 +29,13 @@ class BaseClassifier(beam.PTransform):
         self.batch_duration     = config.classify.batch_duration
         self.model_sample_rate  = config.classify.model_sample_rate
         self.model_url          = config.classify.model_url
+
+        # plotting parameters
+        self.hydrophone_sensitivity = config.classify.hydrophone_sensitivity
+        self.med_filter_size        = config.classify.med_filter_size
+        self.plot_scores            = config.classify.plot_scores
+        self.plot_path_template     = config.classify.plot_path_template
+        self.show_plots             = config.general.show_plots
 
     def _preprocess(self, pcoll):
         signal, start, end, encounter_ids = pcoll
@@ -77,6 +88,102 @@ class BaseClassifier(beam.PTransform):
             target_sr=self.model_sample_rate
         )    
 
+    def _plot_scores(self, scores, t=None):
+        # repeat last value to also see a step at the end:
+        scores = np.concatenate((scores, scores[-1:]))
+        x = range(len(scores))
+        plt.step(x, scores, where='post')
+        plt.plot(x, scores, 'o', color='lightgrey', markersize=9)
+
+        plt.grid(axis='x', color='0.95')
+        plt.xlim(xmin=0, xmax=len(scores) - 1)
+        plt.ylabel('Model Score')
+        plt.xlabel('Seconds')
+        plt.xlim(0, len(t)) if t is not None else None
+
+        if self.med_filter_size is not None:
+            scores_int = [int(s[0]*1000) for s in scores]
+            meds_int = scipy.signal.medfilt(scores_int, kernel_size=self.med_filter_size)
+            meds = [m/1000. for m in meds_int]
+            plt.plot(x, meds, 'p', color='black', markersize=9)
+
+    def _plot_spectrogram_scipy(
+            self,
+            signal,
+            epsilon = 1e-16,
+        ):
+
+        # Compute spectrogram:
+        w = scipy.signal.get_window('hann', self.source_sample_rate)
+        f, t, psd = scipy.signal.spectrogram(
+            signal,
+            self.source_sample_rate,
+            nperseg=self.source_sample_rate,
+            noverlap=0,
+            window=w,
+            nfft=self.source_sample_rate,
+        )
+        psd = 10*np.log10(psd+epsilon) - self.hydrophone_sensitivity
+        logging.info(f"time: {t.shape}, freq: {f.shape}, psd: {psd.shape}")
+
+        # Plot spectrogram:
+        plt.imshow(
+            psd,
+            aspect='auto',
+            origin='lower',
+            vmin=30,
+            vmax=90,
+            cmap='Blues',
+        )
+        plt.yscale('log')
+        y_max = self.source_sample_rate / 2
+        plt.ylim(10, y_max)
+
+        plt.xlabel('Seconds')
+        plt.ylabel('Frequency (Hz)')
+        plt.title(f'Calibrated spectrum levels, 16 {self.source_sample_rate / 1000.0} kHz data')
+        return t, f, psd
+
+    def _plot_audio(self, audio, key):
+        plt.plot(audio)
+        plt.xlabel('Samples')
+        plt.xlim(0, len(audio))
+        plt.ylabel('Energy')
+        plt.title(f'Raw audio signal for {key}')
+
+    def _plot(self, output):
+        audio, start, end, encounter_ids, scores = output
+        key = self._build_key(start, end, encounter_ids)
+
+
+        fig = plt.figure(figsize=(24, 9))
+        gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
+
+        # Plot spectrogram:
+        plt.subplot(gs[0])
+        self._plot_audio(audio, key)
+
+        # Plot spectrogram:
+        plt.subplot(gs[1])
+        t, _, _ = self._plot_spectrogram_scipy(audio)
+
+        # Plot scores:
+        fig.add_subplot(gs[2])
+        self._plot_scores(scores, t=t)
+
+        plt.tight_layout()
+
+        plot_path = self.plot_path_template.format(
+            year=start.year,
+            month=start.month,
+            day=start.day,
+            plot_name=key
+        )
+        os.makedirs(os.path.dirname(plot_path), exist_ok=True)  # TODO refactor when running on GCP
+
+        plt.savefig(plot_path)
+        plt.show() if self.show_plots else plt.close()
+
 
 class WhaleClassifier(BaseClassifier):
     def expand(self, pcoll):
@@ -87,16 +194,29 @@ class WhaleClassifier(BaseClassifier):
             self._postprocess,
             grouped_outputs=beam.pvalue.AsDict(grouped_outputs), 
         )
+
+        if self.plot_scores:
+            outputs | "Plot scores" >> beam.Map(self._plot)
+
         return outputs
     
     def _postprocess(self, pcoll, grouped_outputs):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
-        output = grouped_outputs.get(key, [])
+        scores = grouped_outputs.get(key, [])
 
-        logging.info(f"Postprocessing {key} with signal {len(signal)} and output {len(output)}")
+        # NOTE the nominal signal length per the obtained score array from the
+        # model may be larger than the signal given as input.
+        # When this happens, we discard as many trailing scores as necesary:
+        signal_len_per_scores = len(scores) * self.model_sample_rate
+        while signal_len_per_scores > len(signal):
+            scores = scores[:-1]
+            signal_len_per_scores = len(scores) * self.model_sample_rate
 
-        return signal, start, end, encounter_ids, output
+        logging.info(f"Postprocessing {key} with signal {len(signal)} and scores {len(scores)}")
+        # logging.info(f"scores: {scores}")
+
+        return signal, start, end, encounter_ids, scores
     
 
 class InferenceClient(beam.DoFn):
@@ -121,7 +241,11 @@ class InferenceClient(beam.DoFn):
         response = requests.post(self.model_url, json=data)
         response.raise_for_status()
 
-        yield response.json()
+        preidctions = response.json().get("predictions", [])
+
+        logging.info(f"Received response:\n  predictions:{preidctions}\n  key: {key}")
+
+        yield (key, preidctions)
 
 
 class ListCombine(beam.CombineFn):
@@ -161,13 +285,22 @@ def sample_run():
 
     # simulate config (avoids local import)
     config = SimpleNamespace(
+        general = SimpleNamespace(
+            show_plots=True,
+        ),
         audio = SimpleNamespace(source_sample_rate=16_000),
         classify = SimpleNamespace(
             batch_duration=30, # seconds
+            hydrophone_sensitivity=-168.8,
             model_sample_rate=10_000,
-            model_url="http://127.0.0.1:5000/predict"
+            model_url="http://127.0.0.1:5000/predict",
+            plot_scores=True,
+            plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
+            med_filter_size=3,
         ),
     )
+
+
 
     with beam.Pipeline() as p:
         output = (

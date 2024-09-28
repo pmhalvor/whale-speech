@@ -8,8 +8,8 @@ import logging
 
 # Load the TensorFlow model
 print("Loading model...")
-# model = hub.load("https://tfhub.dev/google/humpback_whale/1")
-model = hub.load("https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1")
+# model = hub.load("https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1")
+model = hub.load("https://tfhub.dev/google/humpback_whale/1")
 score_fn = model.signatures["score"]
 print("Model loaded.")
 
@@ -34,7 +34,7 @@ def predict():
         results = score_fn(
             waveform=waveform_exp, # waveform_exp,
             context_step_samples=10_000
-        )["scores"]
+        )["scores"][0] # NOTE currently only support batch size 1
         print(f"results.shape = {results.shape}")
         print("results = ", results)
 

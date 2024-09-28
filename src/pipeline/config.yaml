@@ -2,6 +2,7 @@ pipeline:
   general:
     verbose: true
     debug: true
+    show_plots: false
 
   input:
     start: "2016-12-21T00:30:00"
@@ -53,9 +54,11 @@ pipeline:
     hydrophone_sensitivity: -168.8
     batch_duration:  600  # seconds
     model_sample_rate: 10000
+    plot_scores: true
     plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
     url: https://tfhub.dev/google/humpback_whale/1
     model_url: "http://127.0.0.1:5000/predict"
+    med_filter_size: 3
 
   postprocess:
     min_gap: 60  # 1 minute

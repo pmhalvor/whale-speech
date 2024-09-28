@@ -35,7 +35,7 @@ class BaseSift(beam.PTransform):
     # plot params
     plot                = config.sift.plot
     plot_path_template  = config.sift.plot_path_template
-    show_plot           = config.sift.show_plot
+    show_plot           = config.general.show_plot
 
     def _build_key(
             self,

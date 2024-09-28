@@ -15,6 +15,7 @@ kagglehub
 tflite
 
 librosa
+simpleaudio
 soundfile
 
 apache-beam>=2.59.0
