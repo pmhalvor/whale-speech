@@ -45,6 +45,8 @@ def predict():
         })
     
     except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # Main entry point
