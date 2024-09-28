@@ -11,26 +11,34 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from config import load_pipeline_config
+# from src.pipeline.config import load_pipeline_config
 
 
-config = load_pipeline_config()
+# config = load_pipeline_config()
 
 
 class AudioTask(beam.DoFn):
-    debug                   = config.general.debug
-    filename_template       = config.audio.filename_template
-    output_path_template    = config.audio.output_path_template
-    skip_existing           = config.audio.skip_existing
-    source_sample_rate      = config.audio.source_sample_rate
-    url_template            = config.audio.url_template
 
-    def __init__(self):
+    def __init__(self, config):
         # init certrain attributes for mockable testing
+        self.config = config
         self.margin = config.audio.margin
         self.offset = config.audio.offset
+        self.debug = config.general.debug
+        self.local = config.general.local
+        self.work_bucket  = config.general.work_bucket
+        self.filename_template = config.audio.filename_template
+        self.output_path_template = config.audio.output_path_template
+        self.skip_existing = config.audio.skip_existing
+        self.source_sample_rate = config.audio.source_sample_rate
+        self.url_template  = config.audio.url_template
         
     def _save_audio(self, audio:np.array, file_path:str):
+        # return if array empty
+        if audio.size == 0:
+            logging.warning(f"Empty audio array. Skipping save.")
+            return file_path
+
         # Write the numpy array to the file as .npy format
         with beam.io.filesystems.FileSystems.create(file_path) as f:
             np.save(f, audio)  # Save the numpy array in .npy format
@@ -62,6 +70,7 @@ class AudioTask(beam.DoFn):
         filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
 
         file_path = self.output_path_template.format(
+            work_bucket=self.work_bucket if not self.local else ".",
             year=start.year,
             month=start.month,
             filename=filename
@@ -273,15 +282,15 @@ class WriteAudio(AudioTask):
         logging.info(f"Writing audio to {file_path}")
         logging.info(f"Audio shape: {array.shape}")
         
-        yield self._save_audio(array, file_path)
+        return self._save_audio(array, file_path)
 
 
 class WriteSiftedAudio(WriteAudio):
-    output_path_template = config.sift.output_path_template
+    # output_path_template = config.sift.output_path_template
 
-    def __init__(self, sift="sift"):
-        super().__init__()
-        self.output_path_template = self.output_path_template.replace("{sift}", sift)
+    def __init__(self, config, sift="sift"):
+        super().__init__(config)
+        self.output_path_template = config.sift.output_path_template.replace("{sift}", sift)
         logging.info(f"Sifted output path template: {self.output_path_template}")
     
     # everything is used from WriteAudio

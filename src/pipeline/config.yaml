@@ -2,6 +2,8 @@ pipeline:
   general:
     verbose: true
     debug: true
+    local: true
+    work_bucket: "gs://bioacoustics/whale-speech"
 
   input:
     start: "2016-12-21T00:30:00"
@@ -29,13 +31,14 @@ pipeline:
     source_sample_rate: 16000
     margin: 30 # TODO set to 900  # seconds  
     offset: 13 # TODO set to 0    # hours
-    output_path_template: "data/audio/raw/{year}/{month:02}/{filename}"
+    # output_path_template: "data/audio/raw/{year}/{month:02}/{filename}"
+    output_path_template: "{work_bucket}/data/audio/raw/{year}/{month:02}/{filename}"
     skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
 
   sift:
     output_path_template: "data/audio/{sift}/{year}/{month:02}/{filename}"
     max_duration: 600  # seconds
-    plot: true
+    plot: false
     plot_path_template: "data/plots/{sift}/{year}/{month:02}/{day:02}/{plot_name}.png"
     window_size: 512
 
@@ -50,10 +53,10 @@ pipeline:
   classify:
     backend: "tensorflow"
     hydrophone_sensitivity: -168.8
-    batch_duration:  600  # seconds
+    batch_duration:  10  # seconds
     model_sample_rate: 10000
     plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
-    url: https://tfhub.dev/google/humpback_whale/1
+    model_url: https://tfhub.dev/google/humpback_whale/1
 
   postprocess:
     min_gap: 60  # 1 minute

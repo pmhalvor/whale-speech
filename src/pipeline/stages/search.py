@@ -1,5 +1,5 @@
 from apache_beam.io import filesystems
-from config import load_pipeline_config
+# from src.pipeline.config import load_pipeline_config
 from happywhale.happywhale import geometry_search
 
 import apache_beam as beam
@@ -9,10 +9,12 @@ import os
 import pandas as pd
 
 
-config = load_pipeline_config()
+# config = load_pipeline_config()
 
 
 class GeometrySearch(beam.DoFn):
+    def __init__(self, config):
+        self.config = config
 
     def process(self, element):
         start = self._preprocess_date(element.get('start'))
@@ -21,7 +23,7 @@ class GeometrySearch(beam.DoFn):
         geometry_file = self._get_geometry_file()
         export_file = self._get_export_path(start, end)
 
-        species = config.search.species
+        species = self.config.search.species
 
         geometry_search(geometry_file, start,end, export_file, species)
 
@@ -38,17 +40,17 @@ class GeometrySearch(beam.DoFn):
         Uses io.Bytes with filesystems.FileSystems.open(data_path)
         to load the geometry file.
         """
-        filename = config.search.filename
-        geometry_filename = config.search.geometery_file_path_template.format(
+        filename = self.config.search.filename
+        geometry_filename = self.config.search.geometery_file_path_template.format(
             filename=filename
         )
         return io.BytesIO(filesystems.FileSystems.open(geometry_filename).read())
     
     
     def _get_export_path(self, start, end):
-        filename = config.search.filename
+        filename = self.config.search.filename
 
-        export_filename = config.search.export_template.format(
+        export_filename = self.config.search.export_template.format(
             filename=filename,
             timeframe=(
                 f"{start}-{end}"
@@ -63,7 +65,7 @@ class GeometrySearch(beam.DoFn):
     def _postprocess(self, export_file) -> pd.DataFrame:
         results = pd.read_csv(export_file)
 
-        results = results[config.search.columns]
+        results = results[self.config.search.columns]
 
         logging.info(f"Search results: \n{results.head()}")
 

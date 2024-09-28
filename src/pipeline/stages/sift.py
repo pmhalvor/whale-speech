@@ -10,10 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from config import load_pipeline_config
-
-
-config = load_pipeline_config()
+# from src.pipeline.config import load_pipeline_config
+# config = load_pipeline_config()
 
 
 class BaseSift(beam.PTransform): 
@@ -24,17 +22,20 @@ class BaseSift(beam.PTransform):
     """
     name = "BaseSift"
 
-    # general params
-    debug       = config.general.debug
-    sample_rate = config.audio.source_sample_rate
+    def __init__(self, config):
+        self.config = config
 
-    # sift-specific params
-    max_duration    = config.sift.max_duration
-    window_size     = config.sift.window_size
-    
-    # plot params
-    plot                = config.sift.plot
-    plot_path_template  = config.sift.plot_path_template
+        # general params
+        self.debug       = config.general.debug
+        self.sample_rate = config.audio.source_sample_rate
+
+        # sift-specific params
+        self.max_duration    = config.sift.max_duration
+        self.window_size     = config.sift.window_size
+        
+        # plot params
+        self.plot                = config.sift.plot
+        self.plot_path_template  = config.sift.plot_path_template
 
     def _build_key(
             self,
@@ -82,7 +83,15 @@ class BaseSift(beam.PTransform):
             min_max_detections[key]["max"]
         ]
 
-        return signal[global_detection_range[0]:global_detection_range[-1]], start, end, encounter_ids
+        # expand window when min == max (no detection) TODO decide on how to handle 
+        if global_detection_range[0] == global_detection_range[-1]:
+            global_detection_range[0] -= self.window_size
+            global_detection_range[-1] += self.window_size
+
+        # truncate signal and make serializable
+        truncated_signal = signal[global_detection_range[0]:global_detection_range[-1]].tolist()
+
+        return truncated_signal, start, end, encounter_ids
 
     def _plot_signal_detections(self, pcoll, min_max_detections, all_detections, params=None):
         signal, start, end, encounter_ids = pcoll
@@ -154,13 +163,14 @@ class Butterworth(BaseSift):
 
     def __init__(
             self,
+            config,
             lowcut: int = None,
             highcut: int = None,
             order: int = None,
             output: str = None,
             sift_threshold: float = None,
         ):
-        super().__init__()
+        super().__init__(config)
 
         # define bandpass
         self.lowcut  = config.sift.butterworth.lowcut if not lowcut else lowcut
@@ -193,7 +203,7 @@ class Butterworth(BaseSift):
         )
 
         # plots for debugging purposes
-        if self.debug or self.plot:
+        if self.plot:  # self.debug or 
             pcoll | "Plot Sifted Output" >> beam.Map(
                 self._plot_signal_detections, 
                 min_max_detections=beam.pvalue.AsDict(min_max_detections), 
