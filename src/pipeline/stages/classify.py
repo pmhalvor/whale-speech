@@ -1,3 +1,5 @@
+from apache_beam.ml.inference.tensorflow_inference import TFModelHandlerTensor
+from apache_beam.ml.inference.base import RunInference
 from apache_beam.io import filesystems
 from datetime import datetime
 
@@ -14,38 +16,56 @@ import time
 import tensorflow_hub as hub
 import tensorflow as tf
 
-from config import load_pipeline_config
+# from src.pipeline.config import load_pipeline_config
+# config = load_pipeline_config()
 
+import psutil
 
-config = load_pipeline_config()
+def print_available_ram():
+    memory_info = psutil.virtual_memory()
+    available_ram = memory_info.available / (1024 ** 3)  # Convert from bytes to GB
+    total_ram = memory_info.total / (1024 ** 3)  # Convert from bytes to GB
+    print(f"Available RAM: {available_ram:.2f} GB")
+    print(f"Total RAM: {total_ram:.2f} GB")
+
+print_available_ram()
 
 
 class BaseClassifier(beam.PTransform): 
     name = "BaseClassifier"
 
-
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.source_sample_rate = config.audio.source_sample_rate
         self.model_sample_rate = config.classify.model_sample_rate
+        self.batch_duration = config.classify.batch_duration
         
-        self.model_path = config.classify.model_path
-
     def _preprocess(self, pcoll):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
 
+        logging.info(f"Preprocessing signal for {key} ...")
+
+        # Ensure signal is a numpy array
+        if type(signal) == list:
+            signal = np.array(signal, dtype=np.float32)  # TODO fix inline conversion
+        elif type(signal) == np.ndarray:
+            pass
+        else:
+            raise ValueError(f"Invalid signal type: {type(signal)}")
+        
         # Resample
         signal = self._resample(signal)
 
-        batch_samples = self.batch_duration * self.sample_rate
+        batch_samples = self.batch_duration * self.source_sample_rate
 
         if signal.shape[0] > batch_samples:
-            logging.debug(f"Signal size exceeds max sample size {batch_samples}.")
+            logging.info(f"Signal size exceeds max sample size {batch_samples}.")
 
             split_indices = [batch_samples*(i+1) for i  in range(math.floor(signal.shape[0] / batch_samples))]
             signal_batches = np.array_split(signal, split_indices)
-            logging.debug(f"Split signal into {len(signal_batches)} batches of size {batch_samples}.")
-            logging.debug(f"Size fo final batch {len(signal_batches[1])}")
+            logging.info(f"Split signal into {len(signal_batches)} batches of size {batch_samples}.")
+            logging.info(f"Size of final batch {len(signal_batches[1])}")
 
             for batch in signal_batches:
                 yield (key, batch)
@@ -64,15 +84,37 @@ class BaseClassifier(beam.PTransform):
         return f"{start_str}-{end_str}_{encounter_str}"
 
     def _postprocess(self, pcoll):
+        logging.info(f"Postprocessing signal ...")
         return pcoll
     
     def _get_model(self):
         model = hub.load(self.model_path)
+        logging.info(f"Model loaded from {self.model_path}")
+        logging.debug(f"Model score: {model.signatures['score']}")
         return model
     
+        # def _get_model_tf_v1(self):
+        #     import tensorflow.compat.v1 as tf
+
+        #     FILENAME = 'gs://bioacoustics-www1/sounds/Cross_02_060203_071428.d20_7.wav'
+
+        #     graph = tf.Graph()
+        #     with graph.as_default():
+        #         model = hub.load('https://kaggle.com/models/google/humpback-whale/frameworks/TensorFlow2/variations/humpback-whale/versions/1')
+
+        #         filename = tf.placeholder(tf.string)
+        #         waveform, sample_rate = tf.audio.decode_wav(tf.io.read_file(filename))
+
+        #         waveform = tf.expand_dims(waveform, 0)  # makes a batch of size 1
+        #         context_step_samples = tf.cast(sample_rate, tf.int64)
+        #         score_fn = model.signatures['score']
+        #         scores = score_fn(
+        #             waveform=waveform, context_step_samples=context_step_samples
+        #         )
+    
     def _resample(self, signal):
-        logging.info(
-            f"Resampling signal from {self.source_sample_rate} to {self.model_sample_rate}")
+        logging.info(f"Resampling signal from {self.source_sample_rate} to {self.model_sample_rate}")
+
         return librosa.resample(
             signal, 
             orig_sr=self.source_sample_rate, 
@@ -80,52 +122,25 @@ class BaseClassifier(beam.PTransform):
         )    
 
 
-class GoogleHumpbackWhaleClassifier(BaseClassifier):
+class HumpbackWhaleClassifier(BaseClassifier):
     """
     Model docs: https://tfhub.dev/google/humpback_whale/1
     """
-    name = "GoogleHumpbackWhaleClassifier"
+    name = "HumpbackWhaleClassifier"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.model = self._get_model()
-        self.score_fn = self.model.signatures['score']
-        self.metadata_fn = self.model.signatures['metadata']
-
+    def __init__(self, config):
+        super().__init__(config)
+        self.model_path = config.classify.model_url
+        self.hydrophone_sensitivity = config.classify.hydrophone_sensitivity
     
     def expand(self, pcoll):
         return (
             pcoll
-            | "Preprocess"  >> beam.Map(self._preprocess)
-            | "Classify"    >> beam.Map(self._classify)
-            | "Postprocess" >> beam.Map(self._postprocess)
+            | "Preprocess"  >> beam.ParDo(self._preprocess)
+            # | "Batch"       >> beam.BatchElements(min_batch_size=1, max_batch_size=2)
+            | "Classify"    >> beam.ParDo(GoogleHumpbackWhaleInferenceDoFn(self.config))
+            # | "Postprocess" >> beam.Map(self._postprocess)
         )
-    
-
-    def _classify(self, pcoll, ):
-        key, signal = pcoll
-    
-        start_classify = time.time()
-
-        # We specify a 1-sec score resolution:
-        context_step_samples = tf.cast(self.model_sample_rate, tf.int64)
-
-        logging.info(f'\n==> Applying model ...')
-        logging.debug(f'   inital input: len(signal_10kHz) = {len(signal)}')
-
-        waveform1 = np.expand_dims(signal, axis=1)
-        waveform_exp = tf.expand_dims(waveform1, 0)  # makes a batch of size 1
-        logging.debug(f"   final input: waveform_exp.shape = {waveform_exp.shape}")
-
-        signal_scores = self.score_fn(
-            waveform=waveform_exp,
-            context_step_samples=context_step_samples
-        )
-        score_values = signal_scores['scores'].numpy()[0]
-        logging.info(f'==> Model applied.  Obtained {len(score_values)} score_values')
-        logging.info(f'==> Elapsed time: {time.time() - start_classify} seconds')
-
-        return (key, score_values)
     
     def _plot_spectrogram_scipy(self, signal, epsilon = 1e-15):
         # Compute spectrogram:
@@ -160,7 +175,6 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
         plt.ylabel('Frequency (Hz)')
         plt.title(f'Calibrated spectrum levels, 16 {self.sample_rate / 1000.0} kHz data')
 
-
     def _plot_scores(self, pcoll, scores, med_filt_size=None):
         audio, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
@@ -182,7 +196,7 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
             meds = [m/1000. for m in meds_int]
             plt.plot(x, meds, 'p', color='black', markersize=9)
 
-        plot_path = config.classify.plot_path_template.format(
+        plot_path = self.config.classify.plot_path_template.format(
             year=start.year,
             month=start.month,
             day=start.day,
@@ -190,3 +204,67 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
         )
         plt.savefig(plot_path)
         plt.show()
+
+
+model = hub.load("https://tfhub.dev/google/humpback_whale/1")
+class GoogleHumpbackWhaleInferenceDoFn(beam.DoFn):
+    name = "GoogleHumpbackWhaleInferenceDoFn"
+
+    def __init__(self, config):
+        self.session = None
+        self.config = config
+        self.model_path = config.classify.model_url
+        self.model_sample_rate = config.classify.model_sample_rate
+        
+    def setup(self):
+        # Load the model once per worker
+        self.model = model
+        self.score_fn = self.model.signatures["score"]
+        logging.info(f"Model loaded inside {self.name}")
+    
+    def process(self, element):
+        key, signal = element
+        # key = "test element"
+        # signal = element[0][0]
+        # logging.info(f"Classifying signal for {key} ...")
+        logging.info(f"   signal.shape = {len(signal)}")
+        logging.info(f"   signal.dtype = {type(signal)}")
+
+        # if len(signal) == 0:
+        #     logging.info(f"Empty signal for {key}")
+        #     return (key, None)
+
+        # Reshape signal
+        logging.info(f"   inital input: len(signal) = {len(signal)}")
+        signal = np.array(signal, dtype=np.float32)
+        waveform1 = np.expand_dims(signal, axis=1)
+        waveform_exp = tf.expand_dims(waveform1, 0)
+        logging.info(f"   final input: waveform_exp.shape = {waveform_exp.shape}")
+        logging.info(f"   final input: waveform_exp.dtype = {waveform_exp.dtype}")
+        logging.info(f"   final input: type(waveform_exp) = {type(waveform_exp)}")
+
+
+        # Inference
+        if waveform_exp.shape[1] < self.model_sample_rate:
+            "skip short signal"
+            return (key, None)
+        
+        print("before inference")
+        print_available_ram()
+
+        # results = self.score_fn(
+        #     waveform=waveform_exp,
+        #     context_step_samples=int(self.model_sample_rate)
+        # )["scores"]
+        results = self.model.score(
+            waveform=waveform_exp,
+            context_step_samples=int(self.model_sample_rate)
+        )["scores"]
+
+        print("after inference")
+        print_available_ram()
+
+        # results = waveform_exp
+        logging.info(f"   results.shape = {results.shape}")
+        
+        yield (key, results)
