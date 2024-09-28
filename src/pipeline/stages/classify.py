@@ -155,7 +155,10 @@ class BaseClassifier(beam.PTransform):
         audio, start, end, encounter_ids, scores = output
         key = self._build_key(start, end, encounter_ids)
 
-
+        if len(audio) == 0:
+            logging.info("No audio to plot.")
+            return
+        
         fig = plt.figure(figsize=(24, 9))
         gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
 
@@ -205,16 +208,7 @@ class WhaleClassifier(BaseClassifier):
         key = self._build_key(start, end, encounter_ids)
         scores = grouped_outputs.get(key, [])
 
-        # NOTE the nominal signal length per the obtained score array from the
-        # model may be larger than the signal given as input.
-        # When this happens, we discard as many trailing scores as necesary:
-        signal_len_per_scores = len(scores) * self.model_sample_rate
-        while signal_len_per_scores > len(signal):
-            scores = scores[:-1]
-            signal_len_per_scores = len(scores) * self.model_sample_rate
-
         logging.info(f"Postprocessing {key} with signal {len(signal)} and scores {len(scores)}")
-        # logging.info(f"scores: {scores}")
 
         return signal, start, end, encounter_ids, scores
     
@@ -241,11 +235,11 @@ class InferenceClient(beam.DoFn):
         response = requests.post(self.model_url, json=data)
         response.raise_for_status()
 
-        preidctions = response.json().get("predictions", [])
+        predictions = response.json().get("predictions", [])
 
-        logging.info(f"Received response:\n  predictions:{preidctions}\n  key: {key}")
+        logging.info(f"Received response:\n  predictions:{predictions}\n  key: {key}")
 
-        yield (key, preidctions)
+        yield (key, predictions)
 
 
 class ListCombine(beam.CombineFn):
