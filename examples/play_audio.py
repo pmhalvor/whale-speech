@@ -1,3 +1,4 @@
+# NOTE simpleaudio is excluded from requirements due to non-portability.
 import numpy as np
 import simpleaudio as sa
 
