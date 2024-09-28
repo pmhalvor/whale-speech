@@ -36,6 +36,7 @@ pipeline:
     output_path_template: "data/audio/{sift}/{year}/{month:02}/{filename}"
     max_duration: 600  # seconds
     plot: true
+    show_plot: false
     plot_path_template: "data/plots/{sift}/{year}/{month:02}/{day:02}/{plot_name}.png"
     window_size: 512
 
@@ -54,6 +55,7 @@ pipeline:
     model_sample_rate: 10000
     plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
     url: https://tfhub.dev/google/humpback_whale/1
+    model_url: "http://127.0.0.1:5000/predict"
 
   postprocess:
     min_gap: 60  # 1 minute

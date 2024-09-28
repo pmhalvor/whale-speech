@@ -35,6 +35,7 @@ class BaseSift(beam.PTransform):
     # plot params
     plot                = config.sift.plot
     plot_path_template  = config.sift.plot_path_template
+    show_plot           = config.sift.show_plot
 
     def _build_key(
             self,
@@ -146,7 +147,7 @@ class BaseSift(beam.PTransform):
         title += f"Encounters: {encounter_ids}"
         plt.title(title) 
         plt.savefig(plot_path)
-        plt.show()
+        plt.show() if self.show_plot else plt.close()
 
 
 class Butterworth(BaseSift):
