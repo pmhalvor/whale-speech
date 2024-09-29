@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import os 
 import time
+import pandas as pd
 
 import requests
 import math 
@@ -208,6 +209,7 @@ class WhaleClassifier(BaseClassifier):
 
         return outputs
     
+
     def _postprocess(self, pcoll, grouped_outputs):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
@@ -286,32 +288,72 @@ class ListCombine(beam.CombineFn):
         return accumulator
     
 
-class WriteResults(beam.DoFn):
+class WriteClassifications(beam.DoFn):
+    def __init__(self, config: SimpleNamespace):
+        self.config = config
+
+        self.classification_path = config.classify.classification_path
+        self.header = "start\tend\tencounter_ids\tclassifications"
+
+        self._init_file_path(self.classification_path, self.header)
+
+
     def process(self, element):
-        # TODO refactor to properly handle typing
-        array = element[0]
-        start = element[1]
-        end = element[2]
-        encounter_ids = element[3]
+        logging.info(f"Writing classifications to {self.classification_path}")
 
-        file_path = self._get_export_path(
-            start,
-            end,
-            encounter_ids,
-        )
+        # skip if empty
+        if self._is_empty(element):
+            logging.info(f"Skipping empty classifications for start {element[1].strftime('%Y-%m-%dT%H:%M:%S')}")
+            return element
 
-        logging.info(f"Writing audio to {file_path}")
-        logging.info(f"Audio shape: {array.shape}")
+        classification_df = pd.read_csv(self.classification_path, sep='\t')
+
+        # create row from element
+        element_str = self._stringify(element)
+        row = pd.DataFrame([element_str], columns=classification_df.columns)
+
+        # join to classification_df, updated eventual new values, on start, end, encounter_ids
+        classification_df = pd.concat([classification_df, row], axis=0, ignore_index=True)
+
+        # drop duplicates
+        logging.info(f"Dropping duplicates from {len(classification_df)} rows")
+        logging.info(f"before: \n {classification_df}")
+        classification_df = classification_df.drop_duplicates(subset=["start", "end"], keep="last") # , "encounter_ids"
+        logging.info(f"resulting df: \n {classification_df}")
+
+        # write to file
+        classification_df.to_csv(self.classification_path, sep='\t', index=False)    
         
-        yield self._save_audio(array, file_path)
+        return element
+    
+
+    def _is_empty(self, element):
+        array, start, end, encounter_ids, classifications = element
+        logging.debug(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
+        return len(classifications) == 0
+    
+
+    def _init_file_path(self, file_path, header):
+        # add header if file does not exist using beam.io
+        if not beam.io.filesystems.FileSystems.exists(file_path):
+            with beam.io.filesystems.FileSystems.create(file_path) as f:
+                f.write(header.encode())
+                logging.info(f"Created new file at {file_path} with header {header}")
+
+    
+    def _stringify(self, element):
+        _, start, end, encounter_ids, classifications = element
+        logging.info(f"Stringifying {start} with {len(classifications)} classifications")
         
+        start_str = start.strftime('%Y-%m-%dT%H:%M:%S')
+        end_str = end.strftime('%Y-%m-%dT%H:%M:%S')
+        encounter_ids_str = str(encounter_ids)
+        
+        return (start_str, end_str, encounter_ids_str, classifications)
 
-    def _save_audio(self, audio:np.array, file_path:str):
-        # Write the numpy array to the file as .npy format
-        with beam.io.filesystems.FileSystems.create(file_path) as f:
-            np.save(f, audio)  # Save the numpy array in .npy format
-
-        return file_path
+    def _tuple_to_tsv(self, element):
+        start_str, end_str, encounter_ids_str, classifications_str = element
+        return f'{start_str}\t{end_str}\t{encounter_ids_str}\t{classifications_str}'
 
 
 def sample_run():

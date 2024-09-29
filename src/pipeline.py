@@ -4,7 +4,7 @@ from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
 from stages.search import GeometrySearch
 from stages.audio import RetrieveAudio, WriteAudio, WriteSiftedAudio
 from stages.sift import Butterworth
-from stages.classify import WhaleClassifier
+from stages.classify import WhaleClassifier, WriteClassifications
 
 from config import load_pipeline_config
 config = load_pipeline_config()
@@ -23,12 +23,13 @@ def run():
         search_output   = input_data    | "Run Geometry Search" >> beam.ParDo(GeometrySearch())
         
         audio_output    = search_output | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
-        audio_files     = audio_output  | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
+        audio_output    | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
 
         sifted_audio    = audio_output  | "Sift Audio"          >> Butterworth()
-        sifted_audio_files = sifted_audio   | "Store Sifted Audio"  >> beam.ParDo(WriteSiftedAudio("butterworth"))
+        sifted_audio    | "Store Sifted Audio"  >> beam.ParDo(WriteSiftedAudio("butterworth"))
 
         classifications = sifted_audio  | "Classify Audio"      >> WhaleClassifier(config)
+        classifications | "Store Classifications" >> beam.ParDo(WriteClassifications(config))
 
 
         # # Post-process the labels
