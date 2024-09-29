@@ -9,6 +9,7 @@ import librosa
 import logging
 import numpy as np
 import os 
+import time
 
 import requests
 import math 
@@ -23,7 +24,8 @@ class BaseClassifier(beam.PTransform):
     name = "BaseClassifier"
 
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: SimpleNamespace):
+        self.config = config
         self.source_sample_rate = config.audio.source_sample_rate
 
         self.batch_duration     = config.classify.batch_duration
@@ -191,7 +193,7 @@ class BaseClassifier(beam.PTransform):
 class WhaleClassifier(BaseClassifier):
     def expand(self, pcoll):
         key_batch       = pcoll             | "Preprocess"              >> beam.ParDo(self._preprocess)
-        batched_outputs = key_batch         | "Classify"                >> beam.ParDo(InferenceClient(self.model_url))
+        batched_outputs = key_batch         | "Classify"                >> beam.ParDo(InferenceClient(self.config))
         grouped_outputs = batched_outputs   | "Combine batched_outputs" >> beam.CombinePerKey(ListCombine())
         outputs         = pcoll             | "Postprocess"             >> beam.Map(
             self._postprocess,
@@ -214,8 +216,10 @@ class WhaleClassifier(BaseClassifier):
     
 
 class InferenceClient(beam.DoFn):
-    def __init__(self, model_url: str):
-        self.model_url = model_url
+    def __init__(self, config: SimpleNamespace):
+
+        self.model_url = config.classify.model_url
+        self.retries = config.classify.inference_retries
 
     def process(self, element):
         key, batch = element
@@ -231,7 +235,19 @@ class InferenceClient(beam.DoFn):
             "key": key,
             "batch": batch,
         }
-        
+
+        wait = 0 
+        while wait < 5:
+            try:
+                response = requests.post(self.model_url, json=data)
+                response.raise_for_status()
+                break
+            except requests.exceptions.ConnectionError as e:
+                logging.info(f"Connection error: {e}")
+                logging.info(f"Retrying in {wait*wait} seconds.")
+                wait += 1
+                time.sleep(wait*wait)
+
         response = requests.post(self.model_url, json=data)
         response.raise_for_status()
 
@@ -266,6 +282,33 @@ class ListCombine(beam.CombineFn):
     def extract_output(self, accumulator):
         return accumulator
     
+
+class WriteResults(beam.DoFn):
+    def process(self, element):
+        # TODO refactor to properly handle typing
+        array = element[0]
+        start = element[1]
+        end = element[2]
+        encounter_ids = element[3]
+
+        file_path = self._get_export_path(
+            start,
+            end,
+            encounter_ids,
+        )
+
+        logging.info(f"Writing audio to {file_path}")
+        logging.info(f"Audio shape: {array.shape}")
+        
+        yield self._save_audio(array, file_path)
+        
+
+    def _save_audio(self, audio:np.array, file_path:str):
+        # Write the numpy array to the file as .npy format
+        with beam.io.filesystems.FileSystems.create(file_path) as f:
+            np.save(f, audio)  # Save the numpy array in .npy format
+
+        return file_path
 
 
 def sample_run():
