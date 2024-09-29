@@ -5,6 +5,10 @@ import tensorflow as tf
 
 import logging
 
+from config import load_pipeline_config
+config = load_pipeline_config()
+
+
 
 # Load the TensorFlow model
 logging.info("Loading model...")
@@ -33,7 +37,7 @@ def predict():
         # Run inference
         results = score_fn(
             waveform=waveform_exp, # waveform_exp,
-            context_step_samples=10_000  # TODO load from config
+            context_step_samples=config.classify.model_sample_rate
         )["scores"][0] # NOTE currently only support batch size 1
         logging.info(f"results.shape = {results.shape}")
         logging.debug("results = ", results)

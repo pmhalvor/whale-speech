@@ -104,9 +104,8 @@ class BaseSift(beam.PTransform):
             plot_name=key
         )
 
-        # TODO make dirs cleaner
-        if not os.path.isdir(os.path.sep.join(plot_path.split(os.path.sep)[:-1])):
-            os.makedirs(os.path.sep.join(plot_path.split(os.path.sep)[:-1]))
+        if not beam.io.filesystems.FileSystems.exists(plot_path):
+            beam.io.filesystems.FileSystems.mkdirs(plot_path)
 
         # normalize and center
         signal = signal / np.max(signal)    # normalize
