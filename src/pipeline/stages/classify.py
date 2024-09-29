@@ -126,7 +126,7 @@ class BaseClassifier(beam.PTransform):
             nfft=self.source_sample_rate,
         )
         psd = 10*np.log10(psd+epsilon) - self.hydrophone_sensitivity
-        logging.info(f"time: {t.shape}, freq: {f.shape}, psd: {psd.shape}")
+        logging.debug(f"time: {t.shape}, freq: {f.shape}, psd: {psd.shape}")
 
         # Plot spectrogram:
         plt.imshow(
@@ -158,8 +158,11 @@ class BaseClassifier(beam.PTransform):
         key = self._build_key(start, end, encounter_ids)
 
         if len(audio) == 0:
-            logging.info("No audio to plot.")
+            logging.info("No audio to classify and plot")
+            logging.debug("(i.e. no detections from sift-stage)")
             return
+        else:
+            logging.info(f"Plotting {key} with audio shape {audio.shape} and scores shape {len(scores)}")
         
         fig = plt.figure(figsize=(24, 9))
         gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
@@ -253,7 +256,7 @@ class InferenceClient(beam.DoFn):
 
         predictions = response.json().get("predictions", [])
 
-        logging.info(f"Received response:\n  predictions:{predictions}\n  key: {key}")
+        logging.info(f"Received response:\n key: {key}  predictions:{len(predictions)}")
 
         yield (key, predictions)
 
