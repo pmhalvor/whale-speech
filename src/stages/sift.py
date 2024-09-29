@@ -35,6 +35,7 @@ class BaseSift(beam.PTransform):
     # plot params
     plot                = config.sift.plot
     plot_path_template  = config.sift.plot_path_template
+    show_plots           = config.general.show_plots
 
     def _build_key(
             self,
@@ -103,9 +104,8 @@ class BaseSift(beam.PTransform):
             plot_name=key
         )
 
-        # TODO make dirs cleaner
-        if not os.path.isdir(os.path.sep.join(plot_path.split(os.path.sep)[:-1])):
-            os.makedirs(os.path.sep.join(plot_path.split(os.path.sep)[:-1]))
+        if not beam.io.filesystems.FileSystems.exists(plot_path):
+            beam.io.filesystems.FileSystems.mkdirs(plot_path)
 
         # normalize and center
         signal = signal / np.max(signal)    # normalize
@@ -146,7 +146,7 @@ class BaseSift(beam.PTransform):
         title += f"Encounters: {encounter_ids}"
         plt.title(title) 
         plt.savefig(plot_path)
-        plt.show()
+        plt.show() if self.show_plots else plt.close()
 
 
 class Butterworth(BaseSift):
@@ -173,7 +173,6 @@ class Butterworth(BaseSift):
             config.sift.butterworth.sift_threshold 
             if not sift_threshold else sift_threshold
         )
-
 
     def expand(self, pcoll):
         """

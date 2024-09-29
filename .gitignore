@@ -1,6 +1,7 @@
 # Repo specific ignores
 audio/
 plots/
+model/
 
 # Python basic ignores
 # Byte-compiled / optimized / DLL files

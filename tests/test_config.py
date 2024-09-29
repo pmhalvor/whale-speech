@@ -7,7 +7,15 @@ def test_load_pipeline_config():
     This test checks that all expected params are present in the pipeline options,
     via set reduction set(a) - set(b) == 0.
     """
-    expected_keys = ['general', 'input', 'search', 'audio', 'sift', 'model', 'postprocess']
+    expected_keys = [
+        'general', 
+        'input', 
+        'search', 
+        'audio',
+        'sift',
+        'classify', 
+        'postprocess'
+    ]
 
     actual_config = load_pipeline_config().__dict__
     actual_keys = actual_config.keys()

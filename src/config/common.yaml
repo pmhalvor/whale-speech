@@ -2,6 +2,7 @@ pipeline:
   general:
     verbose: true
     debug: true
+    show_plots: false
 
   input:
     start: "2016-12-21T00:30:00"
@@ -36,6 +37,7 @@ pipeline:
     output_path_template: "data/audio/{sift}/{year}/{month:02}/{filename}"
     max_duration: 600  # seconds
     plot: true
+    show_plot: false
     plot_path_template: "data/plots/{sift}/{year}/{month:02}/{day:02}/{plot_name}.png"
     window_size: 512
 
@@ -47,10 +49,17 @@ pipeline:
       output: "sos"  # "sos" or "ba" 
       sift_threshold: 0.015
 
-  model:
-    url: https://tfhub.dev/google/humpback_whale/1
-    model_sample_rate: 10000
+  classify:
     hydrophone_sensitivity: -168.8
+    batch_duration:  600  # seconds
+    model_sample_rate: 10000
+    inference_retries: 3
+    plot_scores: true
+    plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
+    classification_path: "data/classifications.tsv"
+    url: https://tfhub.dev/google/humpback_whale/1
+    model_url: "http://127.0.0.1:5000/predict"
+    med_filter_size: 3
 
   postprocess:
     min_gap: 60  # 1 minute

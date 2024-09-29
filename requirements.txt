@@ -10,8 +10,11 @@ six
 
 tensorflow
 tensorflow_hub
+tensorflow_text
+tflite
 
 librosa
 soundfile
 
 apache-beam>=2.59.0
+apache-beam[gcp]
