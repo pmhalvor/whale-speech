@@ -29,13 +29,6 @@ class AudioTask(beam.DoFn):
         # init certrain attributes for mockable testing
         self.margin = config.audio.margin
         self.offset = config.audio.offset
-        
-    def _save_audio(self, audio:np.array, file_path:str):
-        # Write the numpy array to the file as .npy format
-        with beam.io.filesystems.FileSystems.create(file_path) as f:
-            np.save(f, audio)  # Save the numpy array in .npy format
-
-        return file_path
     
     def _load_audio(self, file_path:str):
         # Write the numpy array to the file as .npy format
@@ -274,6 +267,14 @@ class WriteAudio(AudioTask):
         logging.info(f"Audio shape: {array.shape}")
         
         yield self._save_audio(array, file_path)
+        
+
+    def _save_audio(self, audio:np.array, file_path:str):
+        # Write the numpy array to the file as .npy format
+        with beam.io.filesystems.FileSystems.create(file_path) as f:
+            np.save(f, audio)  # Save the numpy array in .npy format
+
+        return file_path
 
 
 class WriteSiftedAudio(WriteAudio):
