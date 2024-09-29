@@ -24,6 +24,7 @@ def example_config():
             plot_scores=True,
             plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
             med_filter_size=3,
+            inference_retries=3,
         ),
     )
 
