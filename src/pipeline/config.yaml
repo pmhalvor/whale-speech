@@ -54,6 +54,7 @@ pipeline:
     hydrophone_sensitivity: -168.8
     batch_duration:  600  # seconds
     model_sample_rate: 10000
+    inference_retries: 3
     plot_scores: true
     plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
     url: https://tfhub.dev/google/humpback_whale/1
