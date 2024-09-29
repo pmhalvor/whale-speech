@@ -12,6 +12,7 @@ Either way, a work around is needed to enable local development (for debugging p
 ### Option 1: Use a smaller model
 I found a quantized model the seemingly condenses the [google/humpback_whale model](https://tfhub.dev/google/humpback_whale/1)  size enough to run in Beam, made by Oleg A. Golev (oleggolev) at https://github.com/oleggolev/COS598D-Whale/. 
 The original model is converted to a tflite model with slightly adapted input and output layers. 
+Example code for handling this model can be found at [examples/quantized_model.py](../../examples/quantized_model.py) and [examples/quantized_inference.py](../../examples/quantized_inference.py).
 
 #### Pros
 - actually works in Beam (on my local machine)
@@ -21,7 +22,7 @@ The original model is converted to a tflite model with slightly adapted input an
 - keeps all our processing in one single unit -> cleaner project structure on our end
 
 #### Cons
-- initial findings found classifications on most random arrays of dummy data -> too many false positives
+- initial findings found classifications on most random arrays of dummy data -> too many false positives (I could be wrong here. Track issue: https://github.com/oleggolev/COS598D-Whale/issues/1)
 - committing to this set-up restricts us to a fixed model size
 - not easily swapped out for new models or architectures -> requires quantization of each new model used (high maintaince)
 - expected input size correlates to 1.5 seconds of audio, which feels too short to correctly classify a whale call (I may be mistaken here though)
