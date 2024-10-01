@@ -5,6 +5,8 @@ from stages.search import GeometrySearch
 from stages.audio import RetrieveAudio, WriteAudio, WriteSiftedAudio
 from stages.sift import Butterworth
 from stages.classify import WhaleClassifier, WriteClassifications
+from stages.postprocess import PostprocessLabels
+
 
 from config import load_pipeline_config
 config = load_pipeline_config()
@@ -19,28 +21,24 @@ def run():
     }
 
     with beam.Pipeline(options=pipeline_options) as p:
-        input_data      = p             | "Create Input"        >> beam.Create([args])  
-        search_output   = input_data    | "Run Geometry Search" >> beam.ParDo(GeometrySearch())
-        
-        audio_output    = search_output | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
-        audio_output    | "Store Audio (temp)"  >> beam.ParDo(WriteAudio())
+        input_data          = p                 | "Create Input"        >> beam.Create([args])  
+        search_output       = input_data        | "Run Geometry Search" >> beam.ParDo(GeometrySearch())
+        audio_output        = search_output     | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
+        sifted_audio        = audio_output      | "Sift Audio"          >> Butterworth()
+        classifications     = sifted_audio      | "Classify Audio"      >> WhaleClassifier(config)
+        postprocess_labels  = classifications   | "Postprocess Labels"  >> beam.ParDo(
+            PostprocessLabels(config),
+            search_output=beam.pvalue.AsSingleton(search_output),
+        )
 
-        sifted_audio    = audio_output  | "Sift Audio"          >> Butterworth()
-        sifted_audio    | "Store Sifted Audio"  >> beam.ParDo(WriteSiftedAudio("butterworth"))
-
-        classifications = sifted_audio  | "Classify Audio"      >> WhaleClassifier(config)
-        classifications | "Store Classifications" >> beam.ParDo(WriteClassifications(config))
-
-
-        # # Post-process the labels
-        # postprocessed_labels = classified_audio | "Postprocess Labels" >> PostprocessLabels()
+        # Store results
+        audio_output        | "Store Audio (temp)"      >> beam.ParDo(WriteAudio())
+        sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio("butterworth"))
+        classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
+        postprocess_labels  | "Write Results"           >> beam.io.WriteToText("data/output.txt", shard_name_template="")
 
         # Output results
         # postprocessed_labels | "Write Results" >> beam.io.WriteToText("output.txt")
-
-        # For debugging, you can write the output to a text file
-        # audio_files     | "Write Audio Output"  >> beam.io.WriteToText('audio_files.txt')
-        # search_results  | "Write Search Output" >> beam.io.WriteToText('search_results.txt')
 
 
 if __name__ == "__main__":
