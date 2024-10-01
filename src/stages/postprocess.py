@@ -36,7 +36,7 @@ class PostprocessLabels(beam.DoFn):
         classifications_df = classifications_df.explode("encounter_ids").rename(columns={"encounter_ids": "encounter_id"})
         classifications_df["encounter_id"] = classifications_df["encounter_id"].astype(str)
         
-        # TODO pool classifications 
+        # TODO pool classifications in postprocessing
 
 
         search_output = search_output.rename(columns={"id": "encounter_id"})
