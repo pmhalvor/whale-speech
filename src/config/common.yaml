@@ -4,6 +4,10 @@ pipeline:
     debug: true
     show_plots: false
 
+    # gcp
+    project: "bioacoustic-2024"
+    dataset_id: "whale_speech"
+
   input:
     start: "2016-12-21T00:30:00"
     end: "2016-12-21T00:45:00"
@@ -66,6 +70,7 @@ pipeline:
     pooling: "average"
     confidence_threshold: 0.5
     output_path_template: "data/labels/{year}/{month:02}/{day:02}.csv"
+    postprocess_table_id: "mapped_audio"
 
   
 
