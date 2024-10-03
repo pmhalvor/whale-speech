@@ -9,6 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pickle
 
 from config import load_pipeline_config
 
@@ -111,7 +112,8 @@ class BaseSift(beam.PTransform):
         signal = signal / np.max(signal)    # normalize
         signal = signal - np.mean(signal)   # center
 
-        plt.figure(figsize=(20, 10))
+        # plt.figure(figsize=(20, 10))
+        fig = plt.figure()
         plt.plot(signal)
         
         # NOTE: for legend logic, plot min_max window first
@@ -146,6 +148,13 @@ class BaseSift(beam.PTransform):
         title += f"Encounters: {encounter_ids}"
         plt.title(title) 
         plt.savefig(plot_path)
+
+        # TODO remove hack to reuse sift figure later 
+        with open(f"{plot_path.split(key)[0]}/data/{key}_min_max.pkl", 'wb') as handle:
+            pickle.dump(min_max_detection_samples, handle)
+        with open(f"{plot_path.split(key)[0]}/data/{key}_all.pkl", 'wb') as handle:
+            pickle.dump(all_detections[key], handle)
+
         plt.show() if self.show_plots else plt.close()
 
 
