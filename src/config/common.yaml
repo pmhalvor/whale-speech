@@ -5,7 +5,7 @@ pipeline:
     show_plots: false
 
     # gcp
-    project: "bioacoustic-2024"
+    project: "bioacoustics-2024"
     dataset_id: "whale_speech"
 
   input:
