@@ -134,3 +134,4 @@ classification_path
 
 ## Resources
 - Interesting blog post comparing stateful DoFns to CombineFn: https://beam.apache.org/blog/stateful-processing/
+- Beam BigQuery walkthrough: https://beam.apache.org/documentation/io/built-in/google-bigquery/
