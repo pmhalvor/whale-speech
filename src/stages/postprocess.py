@@ -26,17 +26,6 @@ class PostprocessLabels(beam.DoFn):
         self.table_id = config.postprocess.postprocess_table_id
 
 
-        self._init_big_query_writer(config)
-
-
-    def _init_big_query_writer(self, config: SimpleNamespace):
-        self.table_spec = bigquery.TableReference(
-            projectId=self.project,
-            datasetId=self.dataset_id,
-            tableId=self.table_id
-        )
-
-
     def process(self, element, search_output):
         # convert element to dataframe
         classifications_df = self._build_classification_df(element)
@@ -54,7 +43,6 @@ class PostprocessLabels(beam.DoFn):
         logging.info(f"Final output columns: {final_df.columns}")
 
         yield final_df.to_dict(orient="records")
-
 
     def _build_classification_df(self, element: Tuple) -> pd.DataFrame:
         # convert element to dataframe
@@ -82,7 +70,6 @@ class PostprocessLabels(beam.DoFn):
         logging.info(f"Classifications shape: {classifications_df.shape}")
         return classifications_df
 
-
     def _build_search_output_df(self, search_output: Dict[str, Any]) -> pd.DataFrame:
         # convert search_output to dataframe
         search_output = search_output.rename(columns={"id": "encounter_id"})
@@ -100,7 +87,6 @@ class PostprocessLabels(beam.DoFn):
 
         return search_output
 
-
     def _pool_classifications(self, classifications: np.array) -> Dict[str, Any]:
         if self.pooling == "mean" or self.pooling == "avg" or self.pooling == "average":
             pooled_score = np.mean(classifications)
@@ -112,7 +98,6 @@ class PostprocessLabels(beam.DoFn):
             raise ValueError(f"Pooling method {self.pooling} not supported.")
         
         return pooled_score
-    
 
     def _add_paths(self, df: pd.DataFrame) -> pd.DataFrame:
         df["audio_path"] = "NotImplemented"
@@ -134,7 +119,6 @@ class WritePostprocess(beam.DoFn):
         self.columns = list(vars(config.postprocess.postprocess_table_schema))
         self.schema = self._schema_to_dict(config.postprocess.postprocess_table_schema)
 
-
     def process(self, element):
         if len(element) == 0:
             return
@@ -143,14 +127,6 @@ class WritePostprocess(beam.DoFn):
             return self._write_local(element)
         else:
             return self._write_gcp(element)
-        
-    def _get_output_path(self, start, key):
-        return self.output_path_template.format(
-            year=start.year,
-            month=start.month,
-            day=start.day,
-            key=key
-        )
     
     def _schema_to_dict(self, schema):
         return {
@@ -179,10 +155,10 @@ class WritePostprocess(beam.DoFn):
         logging.info(f"Element keys: {element[0].keys()}")
         
         element | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-            # self.table_id,
-            # dataset=self.dataset_id,
-            # project=self.project,
-            "bioacoustics-2024.whale_speech.mapped_audio",
+            self.table_id,
+            dataset=self.dataset_id,
+            project=self.project,
+            # "bioacoustics-2024.whale_speech.mapped_audio",
             schema=self.schema,
             write_disposition=write_disposition,
             create_disposition=create_disposition,
