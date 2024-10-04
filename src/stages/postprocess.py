@@ -68,7 +68,7 @@ class PostprocessLabels(beam.DoFn):
 
         logging.info(f"Classifications: \n{classifications_df.head()}")
         logging.info(f"Classifications shape: {classifications_df.shape}")
-        return classifications_df
+        return classifications_df.reset_index(drop=True)
 
     def _build_search_output_df(self, search_output: Dict[str, Any]) -> pd.DataFrame:
         # convert search_output to dataframe
