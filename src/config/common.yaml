@@ -3,6 +3,7 @@ pipeline:
     verbose: true
     debug: true
     show_plots: false
+    is_local: false
 
     # gcp
     project: "bioacoustics-2024"
@@ -66,12 +67,36 @@ pipeline:
     med_filter_size: 3
 
   postprocess:
-    min_gap: 60  # 1 minute
-    pooling: "average"
     confidence_threshold: 0.5
-    output_path_template: "data/labels/{year}/{month:02}/{day:02}.csv"
+    min_gap: 60  # 1 minute
+    output_path: "data/postprocess/output.json"
+    pooling: "average"
     postprocess_table_id: "mapped_audio"
-
-  
-
-
+    postprocess_table_schema: 
+      encounter_id: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      latitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      longitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      start: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      end: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      pooled_score: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      img_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      classification_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'

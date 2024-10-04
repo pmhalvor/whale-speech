@@ -10,15 +10,12 @@ client = bigquery.Client()
 
 # Define the table schema
 schema = [
-    bigquery.SchemaField("key", "STRING"),
-    bigquery.SchemaField("audio", "FLOAT64", mode="REPEATED"),  # 'REPEATED' for arrays
-    bigquery.SchemaField("pooled_score", "FLOAT64"),
-    bigquery.SchemaField("encounter_ids", "STRING", mode="REPEATED"),
-    bigquery.SchemaField("encounter_img_urls", "STRING", mode="REPEATED"),
-    bigquery.SchemaField("longitude", "FLOAT64"),
-    bigquery.SchemaField("latitude", "FLOAT64"),
-    bigquery.SchemaField("start", "TIMESTAMP"),
-    bigquery.SchemaField("end", "TIMESTAMP"),
+    {
+        "name": name,
+        "type": getattr(config.postprocess.postprocess_table_schema, name).type,
+        "mode": getattr(config.postprocess.postprocess_table_schema, name).mode
+    }
+    for name in vars(config.postprocess.postprocess_table_schema)
 ]
 
 

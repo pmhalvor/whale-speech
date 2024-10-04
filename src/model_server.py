@@ -8,8 +8,6 @@ import logging
 from config import load_pipeline_config
 config = load_pipeline_config()
 
-
-
 # Load the TensorFlow model
 logging.info("Loading model...")
 model = hub.load("https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1")

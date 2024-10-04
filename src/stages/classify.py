@@ -199,9 +199,6 @@ class BaseClassifier(beam.PTransform):
 
         _plot_signal_detections(audio, min_max_samples, all_samples)
 
-
-
-
     def _plot(self, output):
         audio, start, end, encounter_ids, scores = output
         key = self._build_key(start, end, encounter_ids)
@@ -256,6 +253,8 @@ class WhaleClassifier(BaseClassifier):
         if self.plot_scores:
             outputs | "Plot scores" >> beam.Map(self._plot)
 
+
+        logging.info(f"Finished {self.name} stage: {outputs}")
         return outputs
     
 
@@ -307,7 +306,7 @@ class InferenceClient(beam.DoFn):
 
         predictions = response.json().get("predictions", [])
 
-        logging.info(f"Received response:\n key: {key}  predictions:{len(predictions)}")
+        logging.info(f"Inference response:\n key: {key}  predictions:{len(predictions)}")
 
         yield (key, predictions)  # TODO fix mixing yield and return in DoFn
 
@@ -349,6 +348,7 @@ class WriteClassifications(beam.DoFn):
 
     def process(self, element):
         logging.info(f"Writing classifications to {self.classification_path}")
+        logging.debug(f"Received element: {element}")
 
         # skip if empty
         if self._is_empty(element):
@@ -375,8 +375,10 @@ class WriteClassifications(beam.DoFn):
     
 
     def _is_empty(self, element):
+        if len(element) == 0:
+            return True
         array, start, end, encounter_ids, classifications = element
-        logging.debug(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
+        logging.info(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
         return len(classifications) == 0
     
 
