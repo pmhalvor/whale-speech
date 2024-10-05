@@ -21,14 +21,17 @@ class GeometrySearch(beam.DoFn):
         self.geometry_file_path_template = config.search.geometry_file_path_template
         self.search_columns = config.search.search_columns
 
-        self.output_path = config.search.output_path_template.format(geofile=self.filename)
-        
         self.project = config.general.project
         self.dataset_id = config.general.dataset_id
         self.table_id = config.search.search_table_id
         self.schema = self._schema_to_dict(config.search.search_table_schema)
         self.temp_location = config.general.temp_location
         self.write_params = config.bigquery.__dict__
+
+        self.output_path = config.search.output_path_template.format(
+            table_id=self.table_id,
+            geofile=self.filename
+        )
 
 
     def process(self, element):
@@ -95,10 +98,15 @@ class GeometrySearch(beam.DoFn):
 
 
     def _store(self, search_results):
+        rows = self._convert_to_table_rows(search_results)
 
         if self.is_local:
-            if not os.path.exists(self.output_path):
-                os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
+            # convert back to dataframe w7 correct columns 
+            search_results = pd.DataFrame(rows)
+            if not filesystems.FileSystems.exists(self.output_path):
+                if not filesystems.FileSystems.exists(os.path.dirname(self.output_path)):
+                    # safely create parent dir (in case something gets wrongly deleted)
+                    filesystems.FileSystems.mkdirs(os.path.dirname(self.output_path))
                 search_results.to_csv(self.output_path, index=False)
             else:
                 previous_search_results = pd.read_csv(self.output_path)
@@ -109,14 +117,10 @@ class GeometrySearch(beam.DoFn):
         else:
             logging.info(f"search_results.columns: {search_results.columns}")
 
-            # write to bigquery
-            rows = self._convert_to_table_rows(search_results)
-            
             rows | f"Update {self.table_id}" >> beam.io.WriteToBigQuery(
                 self.table_id,
                 dataset=self.dataset_id,
                 project=self.project,
-                # "bioacoustics-2024.whale_speech.mapped_audio",
                 schema=self.schema,
                 custom_gcs_temp_location=self.temp_location,
                 **self.write_params

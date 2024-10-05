@@ -2,12 +2,13 @@ from apache_beam.io import filesystems
 from datetime import timedelta, datetime
 from functools import partial
 from six.moves.urllib.request import urlopen  # pyright: ignore
-from typing import Tuple
+from typing import List
 
 import apache_beam as beam
 import io
 import logging
 import numpy as np
+import os
 import pandas as pd
 import soundfile as sf
 
@@ -18,56 +19,89 @@ config = load_pipeline_config()
 
 
 class AudioTask(beam.DoFn):
-    debug                   = config.general.debug
-    filename_template       = config.audio.filename_template
-    output_path_template    = config.audio.output_path_template
-    skip_existing           = config.audio.skip_existing
-    source_sample_rate      = config.audio.source_sample_rate
-    url_template            = config.audio.url_template
 
-    def __init__(self):
-        # init certrain attributes for mockable testing
+    def __init__(self, config):
+        self.debug = config.general.debug
+        self.is_local = config.general.is_local
+
         self.margin = config.audio.margin
         self.offset = config.audio.offset
+        self.source_sample_rate = config.audio.source_sample_rate
+        self.url_template = config.audio.url_template
+
+        self.filename_template = config.audio.filename_template
+        self.output_array_path_template = config.audio.output_array_path_template
+        self.output_table_path_template = config.audio.output_table_path_template
+        self.skip_existing = config.audio.skip_existing
+
+        self.store = config.audio.store_audio
+        self.project = config.general.project
+        self.dataset_id = config.general.dataset_id
+        self.table_id = config.audio.audio_table_id
+        self.schema = self._schema_to_dict(config.audio.audio_table_schema)
+        self.workbucket = config.general.workbucket
     
-    def _load_audio(self, file_path:str):
+    @staticmethod
+    def _build_key(
+            start_time: datetime,
+            end_time: datetime,
+            encounter_ids: list,
+        ):
+        start_str = start_time.strftime('%Y%m%dT%H%M%S')
+        end_str = end_time.strftime('%H%M%S')
+        encounter_str = "_".join(encounter_ids)
+        return f"{start_str}-{end_str}_{encounter_str}"
+
+    @staticmethod
+    def _load_audio(file_path:str):
         # Write the numpy array to the file as .npy format
         with beam.io.filesystems.FileSystems.open(file_path) as f:
             audio = np.load(f)
-
         return audio
     
+    @staticmethod
+    def _schema_to_dict(schema):
+        return {
+            "fields": [
+                {
+                    "name": name, 
+                    "type": getattr(schema, name).type, 
+                    "mode": getattr(schema, name).mode
+                } 
+                for name in vars(schema)
+            ]
+        }
+
     def _get_export_path(
             self,
+            key: str,
             start: datetime,
-            end: datetime,
-            encounter_ids: list[str],
     ):
-
-        file_path_prefix = "{date}T{start_time}-{end_time}-{ids}".format(
-            date=start.strftime("%Y%m%d"),
-            start_time=start.strftime("%H%M%S"),
-            end_time=end.strftime("%H%M%S"),
-            ids="_".join(encounter_ids)
-        )
-
-        # Create a unique file name for each element
-        filename = f"{file_path_prefix}.npy"  # f"{file_path_prefix}_{hash(element)}.npy"
-
-        file_path = self.output_path_template.format(
+        filename = self.filename_template.format(
             year=start.year,
             month=start.month,
+            day=start.day,
+        ).replace("T000000Z", start.strftime("T%H%M%SZ")).replace(".wav", ".npy")
+
+        file_path = self.output_array_path_template.format(
+            key=key,
             filename=filename
         )
 
+        if not self.is_local:
+            file_path = os.path.join(
+                self.workbucket,
+                file_path
+            )
+
         return file_path
 
-    def _file_exists_for_input(self, 
+    def _file_exists_for_input(
+            self, 
+            key: str,
             start: datetime,
-            end: datetime,
-            encounter_ids: list[str]
         ) -> bool:
-        file_path = self._get_export_path(start, end, encounter_ids)
+        file_path = self._get_export_path(key, start)
         return filesystems.FileSystems.exists(file_path)
     
 
@@ -86,29 +120,33 @@ class RetrieveAudio(AudioTask):
         for row in preprocessed_df.itertuples():
             start_time = row.start_time
             end_time = row.end_time
+            key = self._build_key(start_time, end_time, row.encounter_ids)
 
-            # check if audio already exists for this time-frame
-            if self._file_exists_for_input(start_time, end_time, row.encounter_ids):
-                audio_path = self._get_export_path(start_time, end_time, row.encounter_ids)
-                logging.info(f"Audio already exists for {start_time} to {end_time}")
+            logging.info(f"Checking if audio exists for {key}")
+            if self._file_exists_for_input(key, start_time):
+                audio_path = self._get_export_path(key, start_time)
+                logging.info(f"Audio already exists for {key}")
                 if self.skip_existing:
                     logging.info(f"Skipping downstream processing for {audio_path}")
                     continue
                 else:
                     logging.info(f"Loading audio from {audio_path}")
                     audio = self._load_audio(audio_path)
-                    yield audio, start_time, end_time, row.encounter_ids
 
             else:
-                logging.info(f"Loading audio for {start_time} to {end_time}")
+                logging.info(f"Downloading audio for {key}")
                 audio, _ = self._download_audio(
                     start_time,
                     end_time,
                     self.source_sample_rate,
                 )
 
-                # Yield the audio and the search_results
-                yield audio, start_time, end_time, row.encounter_ids
+
+            if self.store:
+                self._store(key, audio, start_time, end_time, row.encounter_ids)
+
+            # Yield the audio and the search_results
+            yield audio, start_time, end_time, row.encounter_ids
 
     def _preprocess(self, df: pd.DataFrame):
         df = self._build_time_frames(df)
@@ -242,8 +280,100 @@ class RetrieveAudio(AudioTask):
 
         return psound_segment, psound_segment_seconds
 
+    def _store(
+        self, 
+        key: str,
+        audio: np.array, 
+        start: datetime, 
+        end: datetime, 
+        encounter_ids: List[str]
+    ):
+        file_path = self._get_export_path(key, start)
+        logging.info(f"Writing audio to {file_path}")
+        logging.info(f"Audio shape: {audio.shape}")
+  
+        if self.is_local:
+            logging.info(f"Updating table {self.table_id} locally")
+            self._store_local(key, file_path, start, end)
+        else:
+            logging.info(f"Updating table {self.table_id} in BigQuery")
+            self._store_bigquery(key, file_path, start, end)
+        
 
-class WriteAudio(AudioTask):
+        with filesystems.FileSystems.create(file_path) as f:
+            # same for local and gsc storage
+            np.save(f, audio)
+        
+
+        logging.info(f"Audio stored at {file_path}")
+
+    def _store_local(
+        self, 
+        key:str,
+        audio_path:np.array, 
+        start:datetime, 
+        end:datetime, 
+    ):
+        table_path = self.output_table_path_template.format(table_id=self.table_id)
+
+        if not filesystems.FileSystems.exists(table_path):
+            # build parent dir if necessary 
+            if not filesystems.FileSystems.exists(os.path.dirname(table_path)):
+                filesystems.FileSystems.mkdirs(os.path.dirname(table_path), exists_ok=True)
+            df = pd.DataFrame([{
+                "key": key,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "audio_path": audio_path
+            }])
+            df.to_csv(table_path, index=False)
+        else:
+            df = pd.read_csv(table_path)
+            new_row = pd.DataFrame([{
+                "key": key,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "audio_path": audio_path
+            }])
+            df = pd.concat([df, new_row])
+            df = df.drop_duplicates()
+            df.to_csv(table_path, index=False)
+
+    def _store_bigquery(
+        self, 
+        key: str,
+        audio_path: str, 
+        start: datetime, 
+        end: datetime, 
+    ):
+        [{
+            "key": key,
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "audio_path": audio_path
+        }] | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+            self.table_id,
+            dataset=self.dataset_id,
+            project=self.project,
+            schema=self.schema,
+            write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE,
+            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+            method=beam.io.WriteToBigQuery.Method.FILE_LOADS,
+            custom_gcs_temp_location=self.workbucket
+        )
+        
+
+
+
+
+class WriteSiftedAudio(AudioTask):
+    output_path_template = config.sift.output_path_template
+
+    def __init__(self, config, sift="sift"):
+        super().__init__(config)
+        self.output_path_template = self.output_path_template.replace("{sift}", sift)
+        logging.info(f"Sifted output path template: {self.output_path_template}")
+    
     def process(self, element):
         # TODO refactor to properly handle typing
         array = element[0]
@@ -269,14 +399,3 @@ class WriteAudio(AudioTask):
             np.save(f, audio)  # Save the numpy array in .npy format
 
         return file_path
-
-
-class WriteSiftedAudio(WriteAudio):
-    output_path_template = config.sift.output_path_template
-
-    def __init__(self, sift="sift"):
-        super().__init__()
-        self.output_path_template = self.output_path_template.replace("{sift}", sift)
-        logging.info(f"Sifted output path template: {self.output_path_template}")
-    
-    # everything is used from WriteAudio

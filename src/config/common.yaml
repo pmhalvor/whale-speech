@@ -8,6 +8,7 @@ pipeline:
     # gcp - bigquery
     project: "bioacoustics-2024"
     dataset_id: "whale_speech"
+    workbucket: "gs://bioacoustics/whale-speech"
     temp_location: "gs://bioacoustics/whale-speech/temp"
 
   input:
@@ -16,7 +17,7 @@ pipeline:
     timezone: "America/Los_Angeles"
   
   search:
-    output_path_template: "data/encounters/geofile={geofile}/encounters.csv"
+    output_path_template: "data/table/{table_id}/geofile={geofile}/encounters.csv"
     filename: "monterey_bay_50km"
     geometry_file_path_template: "data/geo/{filename}.geojson"
     species: "humpback_whale"
@@ -29,7 +30,7 @@ pipeline:
       - "endTime"
       - "timezone"
       - "displayImgUrl"
-    search_table_id: "geometry_saerch"
+    search_table_id: "geometry_search"
     search_table_schema: 
       encounter_id: 
         type: 'STRING'
@@ -53,9 +54,11 @@ pipeline:
     source_sample_rate: 16000
     margin: 30 # TODO set to 900  # seconds  
     offset: 13 # TODO set to 0    # hours
-    output_path_template: "data/audio/raw/key={key}/{filename}"
+    output_array_path_template: "data/audio/raw/key={key}/{filename}"
+    output_table_path_template: "data/table/{table_id}/metadata.csv"
     skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
     audio_table_id: "raw_audio"
+    store_audio: true
     audio_table_schema:
       key: 
         type: 'STRING'
