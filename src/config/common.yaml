@@ -62,8 +62,8 @@ pipeline:
     plot_scores: true
     plot_path_template: "data/plots/results/{year}/{month:02}/{plot_name}.png"
     classification_path: "data/classifications.tsv"
-    url: https://tfhub.dev/google/humpback_whale/1
-    model_url: "http://127.0.0.1:5000/predict"
+    model_uri: https://tfhub.dev/google/humpback_whale/1
+    inference_url: "http://127.0.0.1:5000/predict"
     med_filter_size: 3
 
   postprocess:

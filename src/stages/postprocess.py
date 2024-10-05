@@ -46,29 +46,27 @@ class PostprocessLabels(beam.DoFn):
 
     def _build_classification_df(self, element: Tuple) -> pd.DataFrame:
         # convert element to dataframe
-        classifications_df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications"])
+        df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications"])
+        df = df[df["classifications"].apply(lambda x: len(x) > 0)]  # rm empty rows
 
         # explode encounter_ids
-        classifications_df = classifications_df.explode("encounter_ids").rename(columns={"encounter_ids": "encounter_id"})
-        classifications_df["encounter_id"] = classifications_df["encounter_id"].astype(str)
+        df = df.explode("encounter_ids").rename(columns={"encounter_ids": "encounter_id"})
+        df["encounter_id"] = df["encounter_id"].astype(str)
 
-        # TODO replace classifications check w/ pooled_score check
-        classifications_df = classifications_df[classifications_df["classifications"].apply(lambda x: len(x) > 0)]
         # pool classifications in postprocessing
-        classifications_df["pooled_score"] = classifications_df["classifications"].apply(self._pool_classifications)
+        df["pooled_score"] = df["classifications"].apply(self._pool_classifications)
 
         # convert start and end to isoformat
-        classifications_df["start"] = classifications_df["start"].apply(lambda x: x.isoformat())
-        classifications_df["end"] = classifications_df["end"].apply(lambda x: x.isoformat())
+        df["start"] = df["start"].apply(lambda x: x.isoformat())
+        df["end"] = df["end"].apply(lambda x: x.isoformat())
 
         # drop audio and classification columns 
-        classifications_df = classifications_df.drop(columns=["audio"])
-        classifications_df = classifications_df.drop(columns=["classifications"])
+        df = df.drop(columns=["audio"])
+        df = df.drop(columns=["classifications"])
 
-
-        logging.info(f"Classifications: \n{classifications_df.head()}")
-        logging.info(f"Classifications shape: {classifications_df.shape}")
-        return classifications_df.reset_index(drop=True)
+        logging.info(f"Classifications: \n{df.head()}")
+        logging.info(f"Classifications shape: {df.shape}")
+        return df.reset_index(drop=True)
 
     def _build_search_output_df(self, search_output: Dict[str, Any]) -> pd.DataFrame:
         # convert search_output to dataframe

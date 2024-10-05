@@ -32,7 +32,7 @@ class BaseClassifier(beam.PTransform):
 
         self.batch_duration     = config.classify.batch_duration
         self.model_sample_rate  = config.classify.model_sample_rate
-        self.model_url          = config.classify.model_url
+        self.inference_url          = config.classify.inference_url
 
         # plotting parameters
         self.hydrophone_sensitivity = config.classify.hydrophone_sensitivity
@@ -271,7 +271,7 @@ class WhaleClassifier(BaseClassifier):
 class InferenceClient(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
 
-        self.model_url = config.classify.model_url
+        self.inference_url = config.classify.inference_url
         self.retries = config.classify.inference_retries
 
     def process(self, element):
@@ -292,7 +292,7 @@ class InferenceClient(beam.DoFn):
         wait = 0 
         while wait < 5:
             try:
-                response = requests.post(self.model_url, json=data)
+                response = requests.post(self.inference_url, json=data)
                 response.raise_for_status()
                 break
             except requests.exceptions.ConnectionError as e:
@@ -301,7 +301,7 @@ class InferenceClient(beam.DoFn):
                 wait += 1
                 time.sleep(wait*wait)
 
-        response = requests.post(self.model_url, json=data)
+        response = requests.post(self.inference_url, json=data)
         response.raise_for_status()
 
         predictions = response.json().get("predictions", [])
@@ -424,7 +424,7 @@ def sample_run():
             batch_duration=30, # seconds
             hydrophone_sensitivity=-168.8,
             model_sample_rate=10_000,
-            model_url="http://127.0.0.1:5000/predict",
+            inference_url="http://127.0.0.1:5000/predict",
             plot_scores=True,
             plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
             med_filter_size=3,
