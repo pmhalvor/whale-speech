@@ -20,7 +20,7 @@ def example_config():
             batch_duration=30, # seconds
             hydrophone_sensitivity=-168.8,
             model_sample_rate=10_000,
-            model_url="http://127.0.0.1:5000/predict",
+            inference_url="http://127.0.0.1:5000/predict",
             plot_scores=True,
             plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
             med_filter_size=3,

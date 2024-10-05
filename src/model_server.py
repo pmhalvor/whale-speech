@@ -8,12 +8,9 @@ import logging
 from config import load_pipeline_config
 config = load_pipeline_config()
 
-
-
 # Load the TensorFlow model
 logging.info("Loading model...")
-# model = hub.load("https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1")
-model = hub.load("https://tfhub.dev/google/humpback_whale/1")
+model = hub.load(config.classify.model_uri)
 score_fn = model.signatures["score"]
 logging.info("Model loaded.")
 

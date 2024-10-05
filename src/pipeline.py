@@ -5,7 +5,9 @@ from stages.search import GeometrySearch
 from stages.audio import RetrieveAudio, WriteAudio, WriteSiftedAudio
 from stages.sift import Butterworth
 from stages.classify import WhaleClassifier, WriteClassifications
-from stages.postprocess import PostprocessLabels
+from stages.postprocess import PostprocessLabels, WritePostprocess
+
+from apache_beam.io.gcp.internal.clients import bigquery
 
 
 from config import load_pipeline_config
@@ -13,7 +15,11 @@ config = load_pipeline_config()
 
 def run():
     # Initialize pipeline options
-    pipeline_options = PipelineOptions()
+    pipeline_options = PipelineOptions(
+        # runner="DataflowRunner",
+        project="bioacoustics-2024",
+        temp_location="gs://bioacoustics/whale-speech/temp",
+    )
     pipeline_options.view_as(SetupOptions).save_main_session = True
     args = {
         "start": config.input.start,
@@ -35,10 +41,7 @@ def run():
         audio_output        | "Store Audio (temp)"      >> beam.ParDo(WriteAudio())
         sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio("butterworth"))
         classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
-        postprocess_labels  | "Write Results"           >> beam.io.WriteToText("data/output.txt", shard_name_template="")
-
-        # Output results
-        # postprocessed_labels | "Write Results" >> beam.io.WriteToText("output.txt")
+        postprocess_labels  | "Write to BigQuery"       >> beam.ParDo(WritePostprocess(config))
 
 
 if __name__ == "__main__":

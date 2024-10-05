@@ -11,6 +11,7 @@ import numpy as np
 import os 
 import time
 import pandas as pd
+import pickle
 
 import requests
 import math 
@@ -31,7 +32,7 @@ class BaseClassifier(beam.PTransform):
 
         self.batch_duration     = config.classify.batch_duration
         self.model_sample_rate  = config.classify.model_sample_rate
-        self.model_url          = config.classify.model_url
+        self.inference_url      = config.classify.inference_url
 
         # plotting parameters
         self.hydrophone_sensitivity = config.classify.hydrophone_sensitivity
@@ -103,6 +104,7 @@ class BaseClassifier(beam.PTransform):
         plt.ylabel('Model Score')
         plt.xlabel('Seconds')
         plt.xlim(0, len(t)) if t is not None else None
+        plt.title('Model Scores')
 
         if self.med_filter_size is not None:
             scores_int = [int(s[0]*1000) for s in scores]
@@ -147,12 +149,55 @@ class BaseClassifier(beam.PTransform):
         plt.title(f'Calibrated spectrum levels, 16 {self.source_sample_rate / 1000.0} kHz data')
         return t, f, psd
 
-    def _plot_audio(self, audio, key):
-        plt.plot(audio)
-        plt.xlabel('Samples')
-        plt.xlim(0, len(audio))
-        plt.ylabel('Energy')
-        plt.title(f'Raw audio signal for {key}')
+    def _plot_audio(self, audio, start, key):
+        # plt.plot(audio)
+        # plt.xlabel('Samples')
+        # plt.xlim(0, len(audio))
+        # plt.ylabel('Energy')
+        # plt.title(f'Raw audio signal for {key}')
+        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
+            min_max_samples = pickle.load(f)
+        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
+            all_samples = pickle.load(f)
+        # plt.plot(audio) # TODO remove this if does not work properly
+    
+        def _plot_signal_detections(signal, min_max_detection_samples, all_samples):
+            # TODO refactor plot_signal_detections in classify 
+            logging.info(f"Plotting signal detections: {min_max_detection_samples}")
+
+            plt.plot(signal)
+            
+            # NOTE: for legend logic, plot min_max window first
+            if len(min_max_detection_samples):
+                # shade window that resulted in detection
+                plt.axvspan(
+                    min_max_detection_samples[0],
+                    min_max_detection_samples[-1],
+                    alpha=0.3,
+                    color='y',
+                    zorder=7, # on top of all detections
+                )
+            
+            if len(all_samples):
+                # shade window that resulted in detection
+                for detection in all_samples:
+                    plt.axvspan(
+                        detection - 512/2, # TODO replace w/ window size from config
+                        detection + 512/2,
+                        alpha=0.5,
+                        color='r',
+                        zorder=5, # on top of signal
+                    )
+
+            plt.legend(['Input signal', 'detection window', 'all detections']).set_zorder(10)
+            plt.xlabel(f'Samples (seconds * {16000} Hz)')  # TODO replace with sample rate from config
+            plt.ylabel('Amplitude (normalized and centered)') 
+
+            title = f"Signal detections: {start.strftime('%Y-%m-%d %H:%M:%S')}"
+            plt.title(title) 
+
+
+        _plot_signal_detections(audio, min_max_samples, all_samples)
 
     def _plot(self, output):
         audio, start, end, encounter_ids, scores = output
@@ -170,7 +215,8 @@ class BaseClassifier(beam.PTransform):
 
         # Plot spectrogram:
         plt.subplot(gs[0])
-        self._plot_audio(audio, key)
+        # self._plot_audio(audio, key)
+        self._plot_audio(audio, start, key)
 
         # Plot spectrogram:
         plt.subplot(gs[1])
@@ -207,6 +253,8 @@ class WhaleClassifier(BaseClassifier):
         if self.plot_scores:
             outputs | "Plot scores" >> beam.Map(self._plot)
 
+
+        logging.info(f"Finished {self.name} stage: {outputs}")
         return outputs
     
 
@@ -223,7 +271,7 @@ class WhaleClassifier(BaseClassifier):
 class InferenceClient(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
 
-        self.model_url = config.classify.model_url
+        self.inference_url = config.classify.inference_url
         self.retries = config.classify.inference_retries
 
     def process(self, element):
@@ -244,7 +292,7 @@ class InferenceClient(beam.DoFn):
         wait = 0 
         while wait < 5:
             try:
-                response = requests.post(self.model_url, json=data)
+                response = requests.post(self.inference_url, json=data)
                 response.raise_for_status()
                 break
             except requests.exceptions.ConnectionError as e:
@@ -253,14 +301,14 @@ class InferenceClient(beam.DoFn):
                 wait += 1
                 time.sleep(wait*wait)
 
-        response = requests.post(self.model_url, json=data)
+        response = requests.post(self.inference_url, json=data)
         response.raise_for_status()
 
         predictions = response.json().get("predictions", [])
 
-        logging.info(f"Received response:\n key: {key}  predictions:{len(predictions)}")
+        logging.info(f"Inference response:\n key: {key}  predictions:{len(predictions)}")
 
-        yield (key, predictions)
+        yield (key, predictions)  # TODO fix mixing yield and return in DoFn
 
 
 class ListCombine(beam.CombineFn):
@@ -300,6 +348,7 @@ class WriteClassifications(beam.DoFn):
 
     def process(self, element):
         logging.info(f"Writing classifications to {self.classification_path}")
+        logging.debug(f"Received element: {element}")
 
         # skip if empty
         if self._is_empty(element):
@@ -316,10 +365,8 @@ class WriteClassifications(beam.DoFn):
         classification_df = pd.concat([classification_df, row], axis=0, ignore_index=True)
 
         # drop duplicates
-        logging.info(f"Dropping duplicates from {len(classification_df)} rows")
-        logging.info(f"before: \n {classification_df}")
+        logging.debug(f"Dropping duplicates from {len(classification_df)} rows")
         classification_df = classification_df.drop_duplicates(subset=["start", "end"], keep="last") # , "encounter_ids"
-        logging.info(f"resulting df: \n {classification_df}")
 
         # write to file
         classification_df.to_csv(self.classification_path, sep='\t', index=False)    
@@ -328,8 +375,10 @@ class WriteClassifications(beam.DoFn):
     
 
     def _is_empty(self, element):
+        if len(element) == 0:
+            return True
         array, start, end, encounter_ids, classifications = element
-        logging.debug(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
+        logging.info(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
         return len(classifications) == 0
     
 
@@ -375,7 +424,7 @@ def sample_run():
             batch_duration=30, # seconds
             hydrophone_sensitivity=-168.8,
             model_sample_rate=10_000,
-            model_url="http://127.0.0.1:5000/predict",
+            inference_url="http://127.0.0.1:5000/predict",
             plot_scores=True,
             plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
             med_filter_size=3,
