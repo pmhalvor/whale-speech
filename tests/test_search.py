@@ -31,7 +31,7 @@ def test_get_export_file(sample_element):
     # Assemble
     start = '2024-07-08'
     end = '2024-07-08'
-    expected = "data/encounters/monterey_bay_50km-2024-07-08.csv"
+    expected = "data/encounters/temp/monterey_bay_50km-2024-07-08.csv"
 
     # Act
     actual = GeometrySearch()._get_export_path(start, end)

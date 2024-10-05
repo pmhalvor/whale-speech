@@ -37,7 +37,7 @@ For every stage, I'll discuss what outputs to store, and how they should be writ
 Columns to persist:
 ```
 encounter_id (str)
-encounter_time (str, iso formatted datetime)
+encounter_time (iso formatted datetime)
 longitude (float)
 latitude (float)
 displayImgUrl (str)
@@ -113,7 +113,7 @@ Columns to persist in table:
 ```
 key (str)
 audio_path (str)
-params (Dict[str, str])
+params (Dict[str, str], might need to be str in queryable-table)
 ```
 
 To persist in bucket as array (params and key in path):

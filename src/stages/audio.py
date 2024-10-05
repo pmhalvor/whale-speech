@@ -110,13 +110,11 @@ class RetrieveAudio(AudioTask):
                 # Yield the audio and the search_results
                 yield audio, start_time, end_time, row.encounter_ids
 
-
     def _preprocess(self, df: pd.DataFrame):
         df = self._build_time_frames(df)
         df = self._find_overlapping(df)
 
         return df
-
 
     def _build_time_frames(self, df: pd.DataFrame):
         margin = self.margin
@@ -127,7 +125,6 @@ class RetrieveAudio(AudioTask):
         df["start_time"] = df.startTime - timedelta(seconds=margin)
         df["end_time"] = df.endTime + timedelta(seconds=margin)
 
-        # TODO remove this. Only use during development
         df["start_time"] = df["start_time"] - timedelta(hours=self.offset)
         df["end_time"] = df["end_time"] - timedelta(hours=self.offset)
 
@@ -135,7 +132,6 @@ class RetrieveAudio(AudioTask):
         assert pd.api.types.is_datetime64_any_dtype(df["end_time"])
 
         return df
-    
     
     def _find_overlapping(self, df: pd.DataFrame):
         """
@@ -175,7 +171,6 @@ class RetrieveAudio(AudioTask):
 
         return pd.DataFrame.from_dict(grouped_encounters)
 
-
     def _get_file_url(
             self,
             year: int,
@@ -186,7 +181,6 @@ class RetrieveAudio(AudioTask):
         url = self.url_template.format(year=year, month=month, day=day, filename=filename)
 
         return url
-
 
     def _download_audio(
             self,

@@ -39,7 +39,7 @@ class GeometrySearch(beam.DoFn):
         to load the geometry file.
         """
         filename = config.search.filename
-        geometry_filename = config.search.geometery_file_path_template.format(
+        geometry_filename = config.search.geometry_file_path_template.format(
             filename=filename
         )
         return io.BytesIO(filesystems.FileSystems.open(geometry_filename).read())
