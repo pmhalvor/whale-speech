@@ -8,6 +8,7 @@ pipeline:
     # gcp - bigquery
     project: "bioacoustics-2024"
     dataset_id: "whale_speech"
+    temp_location: "gs://bioacoustics/whale-speech/temp"
 
   input:
     start: "2016-12-21T00:30:00"
@@ -15,12 +16,11 @@ pipeline:
     timezone: "America/Los_Angeles"
   
   search:
-    export_template: "data/encounters/temp/{filename}-{timeframe}.csv"
     output_path_template: "data/encounters/geofile={geofile}/encounters.csv"
     filename: "monterey_bay_50km"
     geometry_file_path_template: "data/geo/{filename}.geojson"
     species: "humpback_whale"
-    columns:
+    search_columns:
       - "id"
       - "latitude"
       - "longitude"
@@ -31,17 +31,17 @@ pipeline:
       - "displayImgUrl"
     search_table_id: "geometry_saerch"
     search_table_schema: 
-      ecounter_id: 
+      encounter_id: 
         type: 'STRING'
         mode: 'REQUIRED'
       encounter_time: 
         type: 'TIMESTAMP'
         mode: 'REQUIRED'
       longitude: 
-        type: 'STRING'
+        type: 'FLOAT64'
         mode: 'REQUIRED'
       latitude: 
-        type: 'STRING'
+        type: 'FLOAT64'
         mode: 'REQUIRED'
       img_path: 
         type: 'STRING'

@@ -1,6 +1,7 @@
 
 from types import SimpleNamespace
 
+import apache_beam as beam
 import argparse
 import os 
 import yaml
@@ -24,7 +25,15 @@ else:
     raise ValueError(f"Invalid ENV: {ENV}")
 
 
-# Function to load defaults from config file
+def add_write_params(config):
+    config["bigquery"] = {
+        "method": beam.io.WriteToBigQuery.Method.FILE_LOADS,
+        "create_disposition": beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        "write_disposition": beam.io.BigQueryDisposition.WRITE_TRUNCATE
+    }
+    return config
+
+
 def read_config(config_file):
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
@@ -88,10 +97,13 @@ def load_pipeline_config(
     NOTE: If conflicting parameter names, both cases 
     will be updated with value from command-line arg.
     """
-    # files
+    # params from config files
     config = read_config(config_file)["pipeline"]
     extra_config = read_config(extra_config_file)["pipeline"]
     config = append_values(config, extra_config)
+
+    # add write parameters
+    config = add_write_params(config)
 
     # command-line arguments
     config = update_config(config)

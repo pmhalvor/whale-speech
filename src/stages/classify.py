@@ -340,7 +340,7 @@ class WriteClassifications(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
         self.config = config
 
-        self.classification_path = config.classify.classification_path
+        self.classification_path = self._get_classification_path(config.classify.output_path_template)
         self.header = "start\tend\tencounter_ids\tclassifications"
 
         self._init_file_path(self.classification_path, self.header)
@@ -381,6 +381,10 @@ class WriteClassifications(beam.DoFn):
         logging.info(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
         return len(classifications) == 0
     
+    def _get_classification_path(self, output_path_template):
+        # TODO add formatting
+        return output_path_template
+
 
     def _init_file_path(self, file_path, header):
         # add header if file does not exist using beam.io

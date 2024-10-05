@@ -17,8 +17,8 @@ def run():
     # Initialize pipeline options
     pipeline_options = PipelineOptions(
         # runner="DataflowRunner",
-        project="bioacoustics-2024",
-        temp_location="gs://bioacoustics/whale-speech/temp",
+        project=config.general.project,
+        temp_location=config.general.temp_location,
     )
     pipeline_options.view_as(SetupOptions).save_main_session = True
     args = {
@@ -28,7 +28,7 @@ def run():
 
     with beam.Pipeline(options=pipeline_options) as p:
         input_data          = p                 | "Create Input"        >> beam.Create([args])  
-        search_output       = input_data        | "Run Geometry Search" >> beam.ParDo(GeometrySearch())
+        search_output       = input_data        | "Run Geometry Search" >> beam.ParDo(GeometrySearch(config))
         audio_output        = search_output     | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio())
         sifted_audio        = audio_output      | "Sift Audio"          >> Butterworth()
         classifications     = sifted_audio      | "Classify Audio"      >> WhaleClassifier(config)

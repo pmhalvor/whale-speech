@@ -14,9 +14,9 @@ class PostprocessLabels(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
         self.config = config
 
-        self.search_output_path_template = config.search.export_template
+        self.search_output_path_template = config.search.output_path_template
         self.sifted_audio_path_template = config.sift.output_path_template
-        self.classification_path = config.classify.classification_path
+        self.classification_path = config.classify.output_path_template
 
         self.pooling = config.postprocess.pooling
         self.project = config.general.project

@@ -2,6 +2,7 @@
 audio/
 plots/
 model/
+hide/
 
 # Python basic ignores
 # Byte-compiled / optimized / DLL files

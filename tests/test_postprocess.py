@@ -8,9 +8,9 @@ from src.stages.postprocess import PostprocessLabels
 @pytest.fixture
 def config():
     return SimpleNamespace(
-        search=SimpleNamespace(export_template="template"),
+        search=SimpleNamespace(output_path_template="template"),
         sift=SimpleNamespace(output_path_template="template"),
-        classify=SimpleNamespace(classification_path="path"),
+        classify=SimpleNamespace(output_path_template="path"),
         postprocess=SimpleNamespace(pooling="mean", postprocess_table_id="table_id"),
         general=SimpleNamespace(project="project", dataset_id="dataset_id")
     )

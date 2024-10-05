@@ -5,7 +5,49 @@ import pandas as pd
 import numpy as np
 
 from stages.search import GeometrySearch
+from types import SimpleNamespace
 from unittest.mock import patch
+
+@pytest.fixture
+def config():
+    return SimpleNamespace(
+        search=SimpleNamespace(
+            output_path_template="template",
+            species="species",
+            filename="filename",
+            geometry_file_path_template="geometry_file_path_template",
+            search_columns=[
+                "id",
+                "latitude",
+                "longitude",
+                "startDate",
+                "startTime",
+                "endTime",
+                "timezone",
+                "displayImgUrl",
+            ],
+            search_table_id="search_table_id",
+            search_table_schema=SimpleNamespace(
+                encounter_id=SimpleNamespace(type="STRING", mode="REQUIRED"),
+                encounter_time=SimpleNamespace(type="STRING", mode="REQUIRED"),
+                latitude=SimpleNamespace(type="FLAOT64", mode="REQUIRED"),
+                longitude=SimpleNamespace(type="FLOAT64", mode="REQUIRED"),
+                img_path=SimpleNamespace(type="STRING", mode="NULLABLE"),
+            )
+        ),
+        general=SimpleNamespace(
+            is_local=True,
+            project="project", 
+            dataset_id="dataset_id",
+            temp_location="temp_location"
+        ),
+        bigquery=SimpleNamespace(
+            write_disposition="write_disposition",
+            create_disposition="create_disposition",
+            method="method",
+            custom_gcs_temp_location="custom_gcs_temp_location"
+        )
+    )
 
 
 @pytest.fixture
@@ -16,31 +58,18 @@ def sample_element():
     }
 
 
-def test_preprocess_date(sample_element):
+def test_preprocess_date(sample_element, config):
     # Assemble
     expected = '2024-07-08'
 
     # Act
-    actual = GeometrySearch()._preprocess_date(sample_element.get('start'))
+    actual = GeometrySearch(config)._preprocess_date(sample_element.get('start'))
 
     # Assert
     assert actual == expected
 
 
-def test_get_export_file(sample_element):
-    # Assemble
-    start = '2024-07-08'
-    end = '2024-07-08'
-    expected = "data/encounters/temp/monterey_bay_50km-2024-07-08.csv"
-
-    # Act
-    actual = GeometrySearch()._get_export_path(start, end)
-
-    # Assert
-    assert actual == expected
-
-
-def test_postprocess(sample_element):
+def test_postprocess(sample_element, config):
     # Assemble
     sample_export_file = "tests/data/sample_2024-07-08.csv"
     expected = pd.DataFrame({
@@ -55,7 +84,7 @@ def test_postprocess(sample_element):
     })
 
     # Act
-    actual = GeometrySearch()._postprocess(sample_export_file)
+    actual = GeometrySearch(config)._postprocess(sample_export_file)
 
     # Assert
     pd.testing.assert_frame_equal(expected, actual)
