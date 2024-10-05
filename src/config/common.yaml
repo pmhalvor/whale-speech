@@ -5,7 +5,7 @@ pipeline:
     show_plots: false
     is_local: false
 
-    # gcp
+    # gcp - bigquery
     project: "bioacoustics-2024"
     dataset_id: "whale_speech"
 

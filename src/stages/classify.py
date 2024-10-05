@@ -32,7 +32,7 @@ class BaseClassifier(beam.PTransform):
 
         self.batch_duration     = config.classify.batch_duration
         self.model_sample_rate  = config.classify.model_sample_rate
-        self.inference_url          = config.classify.inference_url
+        self.inference_url      = config.classify.inference_url
 
         # plotting parameters
         self.hydrophone_sensitivity = config.classify.hydrophone_sensitivity

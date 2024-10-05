@@ -4,14 +4,12 @@ import numpy as np
 import pandas as pd
 import os 
 
-# from google.cloud import bigquery
 from apache_beam.io.gcp.internal.clients import bigquery
 
 from typing import Dict, Any, Tuple
 from types import SimpleNamespace
 
 
-# class PostprocessLabels(beam.PTransform):
 class PostprocessLabels(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
         self.config = config
@@ -30,7 +28,7 @@ class PostprocessLabels(beam.DoFn):
         # convert element to dataframe
         classifications_df = self._build_classification_df(element)
 
-        # convert search_output to dataframe
+        # clean up search_output dataframe
         search_output_df = self._build_search_output_df(search_output)
 
         # join dataframes
@@ -73,7 +71,6 @@ class PostprocessLabels(beam.DoFn):
         search_output = search_output.rename(columns={"id": "encounter_id"})
         search_output["encounter_id"] = search_output["encounter_id"].astype(str)
         search_output = search_output[[
-            # TODO refactor to confing
             "encounter_id",
             "latitude",
             "longitude",
@@ -180,6 +177,7 @@ class WritePostprocess(beam.DoFn):
         element_df = pd.DataFrame(element, columns=self.columns)
         final_df = pd.concat([stored_df, element_df], ignore_index=True)
         final_df = final_df.drop_duplicates()
+        logging.debug(f"Appending df to {self.output_path} \n{final_df}")
 
         # store as json (hack: to remove \/\/ escapes)
         final_df_json = final_df.to_json(orient="records").replace("\\/", "/")
