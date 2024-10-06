@@ -113,12 +113,14 @@ Columns to persist in table:
 ```
 key (str)
 audio_path (str)
+detections_path (str)
 params (Dict[str, str], might need to be str in queryable-table)
 ```
 
-To persist in bucket as array (params and key in path):
+To persist in bucket as inidividual arrays (params and key in path):
 ```
 audio (np.array)
+detections (np.array)
 ```
 
 

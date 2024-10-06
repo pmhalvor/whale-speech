@@ -10,7 +10,6 @@ from stages.audio import RetrieveAudio
 @pytest.fixture
 def config():
     return SimpleNamespace(
-        search=SimpleNamespace(output_path_template="template"),
         audio=SimpleNamespace(
             margin = 300,
             offset = 1,
@@ -26,15 +25,15 @@ def config():
             audio_table_schema = SimpleNamespace(key=SimpleNamespace(type="STRING", mode="REQUIRED"))
 
         ),
-        classify=SimpleNamespace(output_path_template="path"),
-        postprocess=SimpleNamespace(pooling="mean", postprocess_table_id="table_id"),
         general=SimpleNamespace(
             debug = True,
             is_local = True,
             project="project", 
             dataset_id="dataset_id",
-            workbucket = "workbucket"
-        )
+            workbucket = "workbucket",
+            temp_location="temp_location",
+        ),
+        bigquery = SimpleNamespace(write_disposition="write_disposition"), 
     )
 
 @pytest.fixture

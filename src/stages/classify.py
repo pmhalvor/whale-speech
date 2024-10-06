@@ -276,6 +276,7 @@ class InferenceClient(beam.DoFn):
 
     def process(self, element):
         key, batch = element
+        logging.info(f"Sending batch to inference: {key} with {len(batch)} samples")
 
         # skip empty batches
         if len(batch) == 0:

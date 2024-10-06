@@ -29,7 +29,7 @@ def add_write_params(config):
     config["bigquery"] = {
         "method": beam.io.WriteToBigQuery.Method.FILE_LOADS,
         "create_disposition": beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        "write_disposition": beam.io.BigQueryDisposition.WRITE_TRUNCATE
+        "write_disposition": beam.io.BigQueryDisposition.WRITE_APPEND
     }
     return config
 

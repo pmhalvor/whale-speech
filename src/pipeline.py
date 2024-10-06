@@ -2,7 +2,7 @@ import apache_beam as beam
 
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
 from stages.search import GeometrySearch
-from stages.audio import RetrieveAudio, WriteSiftedAudio
+from stages.audio import RetrieveAudio
 from stages.sift import Butterworth
 from stages.classify import WhaleClassifier, WriteClassifications
 from stages.postprocess import PostprocessLabels, WritePostprocess
@@ -30,7 +30,7 @@ def run():
         input_data          = p                 | "Create Input"        >> beam.Create([args])  
         search_output       = input_data        | "Run Geometry Search" >> beam.ParDo(GeometrySearch(config))
         audio_output        = search_output     | "Retrieve Audio"      >> beam.ParDo(RetrieveAudio(config))
-        sifted_audio        = audio_output      | "Sift Audio"          >> Butterworth()
+        sifted_audio        = audio_output      | "Sift Audio"          >> Butterworth(config)
         classifications     = sifted_audio      | "Classify Audio"      >> WhaleClassifier(config)
         postprocess_labels  = classifications   | "Postprocess Labels"  >> beam.ParDo(
             PostprocessLabels(config),
@@ -39,7 +39,7 @@ def run():
 
         # Store results
         # audio_output        | "Store Audio (temp)"      >> beam.ParDo(WriteAudio())
-        sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio(config, "butterworth"))
+        # sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio(config, "butterworth"))
         classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
         postprocess_labels  | "Write to BigQuery"       >> beam.ParDo(WritePostprocess(config))
 

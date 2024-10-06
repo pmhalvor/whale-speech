@@ -40,6 +40,8 @@ class AudioTask(beam.DoFn):
         self.table_id = config.audio.audio_table_id
         self.schema = self._schema_to_dict(config.audio.audio_table_schema)
         self.workbucket = config.general.workbucket
+        self.temp_location = config.general.temp_location
+        self.write_params = config.bigquery.__dict__
     
     @staticmethod
     def _build_key(
@@ -326,9 +328,9 @@ class RetrieveAudio(AudioTask):
                 "end": end.isoformat(),
                 "audio_path": audio_path
             }])
-            df.to_csv(table_path, index=False)
+            df.to_json(table_path, index=False, orient="records")
         else:
-            df = pd.read_csv(table_path)
+            df = pd.read_json(table_path, orient="records")
             new_row = pd.DataFrame([{
                 "key": key,
                 "start": start.isoformat(),
@@ -337,7 +339,7 @@ class RetrieveAudio(AudioTask):
             }])
             df = pd.concat([df, new_row])
             df = df.drop_duplicates()
-            df.to_csv(table_path, index=False)
+            df.to_json(table_path, index=False, orient="records")
 
     def _store_bigquery(
         self, 
@@ -356,46 +358,6 @@ class RetrieveAudio(AudioTask):
             dataset=self.dataset_id,
             project=self.project,
             schema=self.schema,
-            write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE,
-            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-            method=beam.io.WriteToBigQuery.Method.FILE_LOADS,
-            custom_gcs_temp_location=self.workbucket
+            custom_gcs_temp_location=self.temp_location,
+            **self.write_params
         )
-        
-
-
-
-
-class WriteSiftedAudio(AudioTask):
-    output_path_template = config.sift.output_path_template
-
-    def __init__(self, config, sift="sift"):
-        super().__init__(config)
-        self.output_path_template = self.output_path_template.replace("{sift}", sift)
-        logging.info(f"Sifted output path template: {self.output_path_template}")
-    
-    def process(self, element):
-        # TODO refactor to properly handle typing
-        array = element[0]
-        start = element[1]
-        end = element[2]
-        encounter_ids = element[3]
-
-        file_path = self._get_export_path(
-            start,
-            end,
-            encounter_ids,
-        )
-
-        logging.info(f"Writing audio to {file_path}")
-        logging.info(f"Audio shape: {array.shape}")
-        
-        yield self._save_audio(array, file_path)
-        
-
-    def _save_audio(self, audio:np.array, file_path:str):
-        # Write the numpy array to the file as .npy format
-        with beam.io.filesystems.FileSystems.create(file_path) as f:
-            np.save(f, audio)  # Save the numpy array in .npy format
-
-        return file_path

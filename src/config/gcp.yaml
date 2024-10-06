@@ -3,6 +3,7 @@ pipeline:
     verbose: true
     debug: true
     show_plots: false
+    is_local: false
   
 
   audio:

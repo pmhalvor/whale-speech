@@ -55,7 +55,7 @@ pipeline:
     margin: 30 # TODO set to 900  # seconds  
     offset: 13 # TODO set to 0    # hours
     output_array_path_template: "data/audio/raw/key={key}/{filename}"
-    output_table_path_template: "data/table/{table_id}/metadata.csv"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
     skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
     audio_table_id: "raw_audio"
     store_audio: true
@@ -74,12 +74,14 @@ pipeline:
         mode: 'REQUIRED'
 
   sift:
-    output_path_template: "data/audio/{params}/{filename}"
+    output_array_path_template: "data/audio/{params}/key={key}/{filename}"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
     max_duration: 600  # seconds
     plot: true
     show_plot: false
-    plot_path_template: "data/plots/{params}/{plot_name}.png"
+    plot_path_template: "data/plots/{params}/{key}.png"
     window_size: 512
+    store_sift_audio: true
     sift_table_id: "sifted_audio"
     sift_table_schema:
       key: 
@@ -87,14 +89,17 @@ pipeline:
         mode: 'REQUIRED'
       sift_audio_path: 
         type: 'STRING'
-        mode: 'REQUIRED'
+        mode: 'NULLABLE'
+      sift_detections_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
       params: 
         type: 'STRING'
         mode: 'REQUIRED'
 
     # Specific sift-mechanism parameters
     butterworth:
-      param_path_template: "butterworth/highcut={highcut}/lowcut={lowcut}/order={order}/threshold={threshold}"
+      params_path_template: "butterworth/highcut={highcut}/lowcut={lowcut}/order={order}/threshold={threshold}"
       highcut: 1500
       lowcut: 50
       order: 5
@@ -105,7 +110,7 @@ pipeline:
     hydrophone_sensitivity: -168.8
     batch_duration:  600  # seconds
     model_sample_rate: 10000
-    model_uri: https://tfhub.dev/google/humpback_whale/1
+    model_uri: https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1
     inference_url: "http://127.0.0.1:5000/predict"
     inference_retries: 3
     med_filter_size: 3
