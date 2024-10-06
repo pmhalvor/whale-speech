@@ -1,5 +1,6 @@
 # Repo specific ignores
 audio/
+classifications/
 plots/
 model/
 hide/

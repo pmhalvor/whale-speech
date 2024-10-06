@@ -14,9 +14,9 @@ class PostprocessLabels(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
         self.config = config
 
-        self.search_output_path_template = config.search.output_path_template
-        self.sifted_audio_path_template = config.sift.output_array_path_template
-        self.classification_path = config.classify.output_path_template
+        # self.search_output_path_template = config.search.output_path_template
+        # self.sifted_audio_path_template = config.sift.output_array_path_template
+        # self.classification_path = config.classify.output_array_path_template
 
         self.pooling = config.postprocess.pooling
         self.project = config.general.project
@@ -68,8 +68,7 @@ class PostprocessLabels(beam.DoFn):
 
     def _build_search_output_df(self, search_output: Dict[str, Any]) -> pd.DataFrame:
         # convert search_output to dataframe
-        search_output = search_output.rename(columns={"id": "encounter_id"})
-        search_output["encounter_id"] = search_output["encounter_id"].astype(str)
+        search_output["encounter_id"] = search_output["id"].astype(str)
         search_output = search_output[[
             "encounter_id",
             "latitude",

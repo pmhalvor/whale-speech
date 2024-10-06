@@ -1,3 +1,4 @@
+from apache_beam.io import filesystems
 import apache_beam as beam
 
 from datetime import datetime
@@ -28,6 +29,7 @@ class BaseClassifier(beam.PTransform):
 
     def __init__(self, config: SimpleNamespace):
         self.config = config
+        self.is_local = config.general.is_local
         self.source_sample_rate = config.audio.source_sample_rate
 
         self.batch_duration     = config.classify.batch_duration
@@ -40,6 +42,42 @@ class BaseClassifier(beam.PTransform):
         self.plot_scores            = config.classify.plot_scores
         self.plot_path_template     = config.classify.plot_path_template
         self.show_plots             = config.general.show_plots
+
+        # store parameters
+        self.store = config.classify.store_classifications
+        self.output_array_path_template = config.classify.output_array_path_template
+        self.output_table_path_template = config.classify.output_table_path_template
+        
+        self.project = config.general.project
+        self.dataset_id = config.general.dataset_id
+        self.table_id = config.classify.classification_table_id
+        self.schema = self._schema_to_dict(config.classify.classification_table_schema)
+        self.temp_location = config.general.temp_location
+        self.workbucket = config.general.workbucket
+        self.write_params = config.bigquery.__dict__
+        
+        # TODO dynamically update params used in filter to build classification path
+        self.params_path_template = config.sift.butterworth.params_path_template
+        self.path_params = {
+            "name": "butterworth",
+            "lowcut": config.sift.butterworth.lowcut,
+            "highcut": config.sift.butterworth.highcut,
+            "order": config.sift.butterworth.order,
+            "threshold": config.sift.butterworth.sift_threshold,
+        } 
+
+    @staticmethod
+    def _schema_to_dict(schema):
+        return {
+            "fields": [
+                {
+                    "name": name, 
+                    "type": getattr(schema, name).type, 
+                    "mode": getattr(schema, name).mode
+                } 
+                for name in vars(schema)
+            ]
+        }
 
     def _preprocess(self, pcoll):
         signal, start, end, encounter_ids = pcoll
@@ -229,15 +267,18 @@ class BaseClassifier(beam.PTransform):
         plt.tight_layout()
 
         plot_path = self.plot_path_template.format(
-            year=start.year,
-            month=start.month,
-            day=start.day,
+            params=self._get_params_path(),
             plot_name=key
         )
         os.makedirs(os.path.dirname(plot_path), exist_ok=True)  # TODO refactor when running on GCP
 
         plt.savefig(plot_path)
         plt.show() if self.show_plots else plt.close()
+
+    def _get_params_path(self):
+        return self.params_path_template.format(
+            **self.path_params
+        )
 
 
 class WhaleClassifier(BaseClassifier):
@@ -250,23 +291,88 @@ class WhaleClassifier(BaseClassifier):
             grouped_outputs=beam.pvalue.AsDict(grouped_outputs), 
         )
 
+        if self.store:
+            outputs | "Write classifications" >> beam.ParDo(self._store)
+
         if self.plot_scores:
             outputs | "Plot scores" >> beam.Map(self._plot)
-
 
         logging.info(f"Finished {self.name} stage: {outputs}")
         return outputs
     
-
     def _postprocess(self, pcoll, grouped_outputs):
         signal, start, end, encounter_ids = pcoll
         key = self._build_key(start, end, encounter_ids)
         scores = grouped_outputs.get(key, [])
-
         logging.info(f"Postprocessing {key} with signal {len(signal)} and scores {len(scores)}")
-
         return signal, start, end, encounter_ids, scores
-    
+
+    def _store(self, outputs):
+        audio, start, end, encounter_ids, scores = outputs
+        key = self._build_key(start, end, encounter_ids)
+
+        classifications_path = self.output_array_path_template.format(
+            params=self._get_params_path(),
+            key=key
+        )
+
+        if len(scores) == 0 or len(audio) == 0:
+            logging.info(f"No detections for {key}. Skipping storage.")
+            return None
+
+        if self.is_local:
+            self._store_local(key, classifications_path)
+        else:
+            classifications_path = os.path.join(self.workbucket, classifications_path)
+            self._store_bigquery(key, classifications_path)
+
+        # store classifications
+        with filesystems.FileSystems.create(classifications_path) as f:
+            logging.info(f"Storing sifted audio to {classifications_path}")
+            np.save(f, np.array(scores).flatten())
+
+
+    def _store_local(self, key, classifications_path):
+        logging.info(f"Storing local classification for {key}")
+        
+        table_path = self.output_table_path_template.format(table_id=self.table_id)
+
+        if not filesystems.FileSystems.exists(table_path):
+            # build parent dir if necessary 
+            filesystems.FileSystems.create(table_path)
+            df = pd.DataFrame([{
+                "key": key,
+                "classifications_path": classifications_path,
+            }])
+            df.to_json(table_path, index=False, orient="records")
+        else:
+            df = pd.read_json(table_path, orient="records")
+            new_row = pd.DataFrame([{
+                "key": key,
+                "classifications_path": classifications_path,
+            }])
+            df = pd.concat([df, new_row])
+            df = df.drop_duplicates()
+            df.to_json(table_path, index=False, orient="records")
+
+    def _store_bigquery(
+            self, 
+            key, 
+            classifications_path
+        ):
+        logging.info(f"Storing classification for {key} in BigQuery")
+        [{
+            "key": key,
+            "classifications_path": classifications_path
+        }] | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+            self.table_id,
+            dataset=self.dataset_id,
+            project=self.project,
+            schema=self.schema,
+            custom_gcs_temp_location=self.temp_location,
+            **self.write_params
+        )
+
 
 class InferenceClient(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
@@ -336,79 +442,6 @@ class ListCombine(beam.CombineFn):
     def extract_output(self, accumulator):
         return accumulator
     
-
-class WriteClassifications(beam.DoFn):
-    def __init__(self, config: SimpleNamespace):
-        self.config = config
-
-        self.classification_path = self._get_classification_path(config.classify.output_path_template)
-        self.header = "start\tend\tencounter_ids\tclassifications"
-
-        self._init_file_path(self.classification_path, self.header)
-
-
-    def process(self, element):
-        logging.info(f"Writing classifications to {self.classification_path}")
-        logging.debug(f"Received element: {element}")
-
-        # skip if empty
-        if self._is_empty(element):
-            logging.info(f"Skipping empty classifications for start {element[1].strftime('%Y-%m-%dT%H:%M:%S')}")
-            return element
-
-        classification_df = pd.read_csv(self.classification_path, sep='\t')
-
-        # create row from element
-        element_str = self._stringify(element)
-        row = pd.DataFrame([element_str], columns=classification_df.columns)
-
-        # join to classification_df, updated eventual new values, on start, end, encounter_ids
-        classification_df = pd.concat([classification_df, row], axis=0, ignore_index=True)
-
-        # drop duplicates
-        logging.debug(f"Dropping duplicates from {len(classification_df)} rows")
-        classification_df = classification_df.drop_duplicates(subset=["start", "end"], keep="last") # , "encounter_ids"
-
-        # write to file
-        classification_df.to_csv(self.classification_path, sep='\t', index=False)    
-        
-        return element
-    
-
-    def _is_empty(self, element):
-        if len(element) == 0:
-            return True
-        array, start, end, encounter_ids, classifications = element
-        logging.info(f"Checking if classifications are empty for start {start.strftime('%Y-%m-%dT%H:%M:%S')}: {len(classifications)}")
-        return len(classifications) == 0
-    
-    def _get_classification_path(self, output_path_template):
-        # TODO add formatting
-        return output_path_template
-
-
-    def _init_file_path(self, file_path, header):
-        # add header if file does not exist using beam.io
-        if not beam.io.filesystems.FileSystems.exists(file_path):
-            with beam.io.filesystems.FileSystems.create(file_path) as f:
-                f.write(header.encode())
-                logging.info(f"Created new file at {file_path} with header {header}")
-
-    
-    def _stringify(self, element):
-        _, start, end, encounter_ids, classifications = element
-        logging.info(f"Stringifying {start} with {len(classifications)} classifications")
-        
-        start_str = start.strftime('%Y-%m-%dT%H:%M:%S')
-        end_str = end.strftime('%Y-%m-%dT%H:%M:%S')
-        encounter_ids_str = str(encounter_ids)
-        
-        return (start_str, end_str, encounter_ids_str, classifications)
-
-    def _tuple_to_tsv(self, element):
-        start_str, end_str, encounter_ids_str, classifications_str = element
-        return f'{start_str}\t{end_str}\t{encounter_ids_str}\t{classifications_str}'
-
 
 def sample_run():
     signal = np.load("data/audio/butterworth/2016/12/20161221T004930-005030-9182.npy")

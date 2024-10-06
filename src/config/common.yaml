@@ -99,7 +99,7 @@ pipeline:
 
     # Specific sift-mechanism parameters
     butterworth:
-      params_path_template: "butterworth/highcut={highcut}/lowcut={lowcut}/order={order}/threshold={threshold}"
+      params_path_template: "{name}/highcut={highcut}/lowcut={lowcut}/order={order}/threshold={threshold}"
       highcut: 1500
       lowcut: 50
       order: 5
@@ -107,23 +107,27 @@ pipeline:
       sift_threshold: 0.015
 
   classify:
-    hydrophone_sensitivity: -168.8
     batch_duration:  600  # seconds
+
     model_sample_rate: 10000
     model_uri: https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1
     inference_url: "http://127.0.0.1:5000/predict"
     inference_retries: 3
     med_filter_size: 3
+
     plot_scores: true
+    hydrophone_sensitivity: -168.8
     plot_path_template: "data/plots/results/{params}/{plot_name}.png"
-    # classification_path: "data/classifications.tsv"
-    output_path_template: "data/classifications/{params}/{filename}.json"
-    classify_table_id: "classifications"
-    classify_table_schema:
+    output_array_path_template: "data/classifications/{params}/{key}.npy"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
+
+    store_classifications: true
+    classification_table_id: "classifications"
+    classification_table_schema:
       key: 
         type: 'STRING'
         mode: 'REQUIRED'
-      classification_path: 
+      classifications_path: 
         type: 'STRING'
         mode: 'REQUIRED'
 

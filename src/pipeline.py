@@ -4,7 +4,7 @@ from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
 from stages.search import GeometrySearch
 from stages.audio import RetrieveAudio
 from stages.sift import Butterworth
-from stages.classify import WhaleClassifier, WriteClassifications
+from stages.classify import WhaleClassifier
 from stages.postprocess import PostprocessLabels, WritePostprocess
 
 from apache_beam.io.gcp.internal.clients import bigquery
@@ -40,7 +40,7 @@ def run():
         # Store results
         # audio_output        | "Store Audio (temp)"      >> beam.ParDo(WriteAudio())
         # sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio(config, "butterworth"))
-        classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
+        # classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
         postprocess_labels  | "Write to BigQuery"       >> beam.ParDo(WritePostprocess(config))
 
 

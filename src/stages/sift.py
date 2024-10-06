@@ -75,7 +75,7 @@ class BaseSift(beam.PTransform):
         return {}
 
     def _get_path_params(self):
-        return {}
+        return {"name": self.name.lower()}
 
     def _build_key(
             self,
@@ -123,7 +123,12 @@ class BaseSift(beam.PTransform):
             min_max_detections[key]["max"]
         ]
 
-        return signal[global_detection_range[0]:global_detection_range[-1]], start, end, encounter_ids
+        return (
+            signal[global_detection_range[0]:global_detection_range[-1]], 
+            start, 
+            end, 
+            encounter_ids,
+        )
 
     def _plot_signal_detections(self, pcoll, min_max_detections, all_detections):
         signal, start, end, encounter_ids = pcoll
@@ -274,6 +279,7 @@ class Butterworth(BaseSift):
         path_params = self._get_filter_params()
         path_params.pop("output")
         path_params["threshold"] = self.threshold
+        path_params["name"] = self.name.lower()
         return path_params
 
     def _frequency_filter_sift(
@@ -336,9 +342,7 @@ class Butterworth(BaseSift):
             return
 
         # build paths 
-        params_path = self.params_path_template.format(
-            **self._get_path_params()
-        )
+        params_path = self.params_path_template.format(**self._get_path_params())
         audio_path = self.output_array_path_template.format(
             params=params_path,
             key=key,
@@ -380,8 +384,6 @@ class Butterworth(BaseSift):
             np.save(f, detections[key])
 
         logging.info(f"Stored sifted audio and detections for {key}.")
-        breakpoint()
-
 
     def _store_local(
         self, 
@@ -414,7 +416,6 @@ class Butterworth(BaseSift):
             df = df.drop_duplicates()
             df.to_json(table_path, index=False, orient="records")
 
-
     def _store_bigquery(
         self, 
         key: str,
@@ -436,7 +437,6 @@ class Butterworth(BaseSift):
             **self.write_params
         )
 
-        pass
 
 
 class ListCombine(beam.CombineFn):
