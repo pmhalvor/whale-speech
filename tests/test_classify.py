@@ -13,9 +13,26 @@ from unittest.mock import patch
 def example_config():
     return SimpleNamespace(
         general = SimpleNamespace(
+            is_local="is_local",
             show_plots=True,
+            project="project",
+            dataset_id="dataset_id",
+            temp_location="temp_location",
+            workbucket="workbucket",
         ),
-        audio = SimpleNamespace(source_sample_rate=16_000),
+        audio = SimpleNamespace(
+            source_sample_rate=16_000
+        ),
+        sift = SimpleNamespace(
+            butterworth=SimpleNamespace(
+                lowcut=50,
+                highcut=1500,
+                order=2,
+                output="sos",
+                sift_threshold=0.015,
+                params_path_template="params_path_template"
+            ),
+        ),
         classify = SimpleNamespace(
             batch_duration=30, # seconds
             hydrophone_sensitivity=-168.8,
@@ -25,7 +42,17 @@ def example_config():
             plot_path_template="data/plots/results/{year}/{month:02}/{plot_name}.png",
             med_filter_size=3,
             inference_retries=3,
+            store_classifications="store_classifications",
+            classification_table_id="classification_table_id",
+            classification_table_schema=SimpleNamespace(
+                key=SimpleNamespace(type="STRING", mode="REQUIRED"),
+            ),
+            output_array_path_template="output_array_path_template",
+            output_table_path_template="output_table_path_template",
         ),
+        bigquery=SimpleNamespace(
+            write_disposition="write_disposition"
+        )
     )
 
 @pytest.fixture

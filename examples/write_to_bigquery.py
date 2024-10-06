@@ -1,5 +1,4 @@
 
-from apache_beam.io.gcp.internal.clients import bigquery
 import apache_beam as beam
 
 
