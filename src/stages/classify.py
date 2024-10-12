@@ -331,7 +331,6 @@ class WhaleClassifier(BaseClassifier):
             logging.info(f"Storing sifted audio to {classifications_path}")
             np.save(f, np.array(scores).flatten())
 
-
     def _store_local(self, key, classifications_path):
         logging.info(f"Storing local classification for {key}")
         

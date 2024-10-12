@@ -7,8 +7,6 @@ from stages.sift import Butterworth
 from stages.classify import WhaleClassifier
 from stages.postprocess import PostprocessLabels, WritePostprocess
 
-from apache_beam.io.gcp.internal.clients import bigquery
-
 
 from config import load_pipeline_config
 config = load_pipeline_config()
@@ -36,12 +34,6 @@ def run():
             PostprocessLabels(config),
             search_output=beam.pvalue.AsSingleton(search_output),
         )
-
-        # Store results
-        # audio_output        | "Store Audio (temp)"      >> beam.ParDo(WriteAudio())
-        # sifted_audio        | "Store Sifted Audio"      >> beam.ParDo(WriteSiftedAudio(config, "butterworth"))
-        # classifications     | "Store Classifications"   >> beam.ParDo(WriteClassifications(config))
-        postprocess_labels  | "Write to BigQuery"       >> beam.ParDo(WritePostprocess(config))
 
 
 if __name__ == "__main__":
