@@ -11,6 +11,24 @@ pipeline:
     workbucket: "gs://bioacoustics/whale-speech"
     temp_location: "gs://bioacoustics/whale-speech/temp"
 
+    # gcp - storage
+    tables:
+      - "raw_audio"
+      - "sifted_audio"
+      - "classifications"
+      - "mapped_audio"
+      - "geometry_search"
+
+    partition_columns:
+      - "encounter_id"
+      - "start"
+      - "end"
+      - "img_path"
+      - "audio_path"
+      - "classification_path"
+      - "sift_audio_path"
+      - "sift_detections_path"
+
   input:
     start: "2016-12-21T00:30:00"
     end: "2016-12-21T00:45:00"
