@@ -11,8 +11,18 @@ def config():
         search=SimpleNamespace(output_path_template="template"),
         sift=SimpleNamespace(output_array_path_template="template"),
         classify=SimpleNamespace(output_path_template="path"),
-        postprocess=SimpleNamespace(pooling="mean", postprocess_table_id="table_id"),
-        general=SimpleNamespace(project="project", dataset_id="dataset_id")
+        postprocess=SimpleNamespace(
+            pooling="mean", 
+            postprocess_table_id="table_id",
+            output_path="output_path",
+            postprocess_table_schema=SimpleNamespace(
+                start=SimpleNamespace(type="TIMESTAMP", mode="REQUIRED"),
+                end=SimpleNamespace(type="TIMESTAMP", mode="REQUIRED"),
+                encounter_id=SimpleNamespace(type="STRING", mode="REQUIRED"),
+                pooled_score=SimpleNamespace(type="FLOAT", mode="REQUIRED"),
+            ),
+        ),
+        general=SimpleNamespace(project="project", dataset_id="dataset_id", is_local=True),
     )
 
 @pytest.fixture
