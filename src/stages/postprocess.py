@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import os 
 
-from apache_beam.io.gcp.internal.clients import bigquery
+from apache_beam.io import filesystems
 
 from typing import Dict, Any, Tuple
 from types import SimpleNamespace
@@ -23,6 +23,28 @@ class PostprocessLabels(beam.DoFn):
         self.dataset_id = config.general.dataset_id
         self.table_id = config.postprocess.postprocess_table_id
 
+        # storage params
+        self.is_local = config.general.is_local
+        self.output_path = config.postprocess.output_path
+        self.project = config.general.project
+        self.dataset_id = config.general.dataset_id
+        self.table_id = config.postprocess.postprocess_table_id
+        self.columns = list(vars(config.postprocess.postprocess_table_schema))
+        self.schema = self._schema_to_dict(config.postprocess.postprocess_table_schema)
+
+
+    @staticmethod
+    def _schema_to_dict(schema):
+        return {
+            "fields": [
+                {
+                    "name": name, 
+                    "type": getattr(schema, name).type, 
+                    "mode": getattr(schema, name).mode
+                } 
+                for name in vars(schema)
+            ]
+        }
 
     def process(self, element, search_output):
         # convert element to dataframe
@@ -39,6 +61,8 @@ class PostprocessLabels(beam.DoFn):
 
         logging.info(f"Final output: \n{final_df.head()}")
         logging.info(f"Final output columns: {final_df.columns}")
+
+        self._store(final_df)       
 
         yield final_df.to_dict(orient="records")
 
@@ -100,41 +124,16 @@ class PostprocessLabels(beam.DoFn):
         df = df.drop(columns=["displayImgUrl"])
         return df
 
-
-class WritePostprocess(beam.DoFn):
-    def __init__(self, config: SimpleNamespace):
-        self.config = config
-
-        self.is_local = config.general.is_local
-        self.output_path = config.postprocess.output_path
-        self.project = config.general.project
-        self.dataset_id = config.general.dataset_id
-        self.table_id = config.postprocess.postprocess_table_id
-        self.columns = list(vars(config.postprocess.postprocess_table_schema))
-        self.schema = self._schema_to_dict(config.postprocess.postprocess_table_schema)
-
-    def process(self, element):
-        if len(element) == 0:
+    def _store(self, df: pd.DataFrame):
+        if len(df) == 0:
             return
-
+        
         if self.is_local:
-            return self._write_local(element)
+            self._store_local(df)
         else:
-            return self._write_gcp(element)
+            self._store_bigquery(df)
     
-    def _schema_to_dict(self, schema):
-        return {
-            "fields": [
-                {
-                    "name": name, 
-                    "type": getattr(schema, name).type, 
-                    "mode": getattr(schema, name).mode
-                } 
-                for name in vars(schema)
-            ]
-        }
-
-    def _write_gcp(self, element):
+    def _store_bigquery(self, element):
         write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE
         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED
         method=beam.io.WriteToBigQuery.Method.FILE_LOADS
@@ -162,8 +161,10 @@ class WritePostprocess(beam.DoFn):
 
         yield element
 
-    def _write_local(self, element):
-        if os.path.exists(self.output_path):
+    def _store_local(self, element):
+        logging.info(f"Storing to local path: {self.output_path}")
+
+        if filesystems.FileSystems.exists(self.output_path):
             stored_df = pd.read_json(self.output_path, orient="records")
 
             # convert encounter_id to str
