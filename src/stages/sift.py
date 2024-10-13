@@ -92,7 +92,7 @@ class BaseSift(beam.PTransform):
         """
         pcoll: tuple(audio, start_time, end_time, row.encounter_ids)
         """
-        signal, start, end, encounter_ids = pcoll
+        signal, start, end, encounter_ids, _ = pcoll
         key = self._build_key(start, end, encounter_ids)
 
         max_samples = self.max_duration * self.sample_rate
@@ -110,7 +110,7 @@ class BaseSift(beam.PTransform):
             yield (key, signal)
 
     def _postprocess(self, pcoll, min_max_detections):
-        signal, start, end, encounter_ids = pcoll
+        signal, start, end, encounter_ids, _ = pcoll
         key = self._build_key(start, end, encounter_ids)
 
         logging.info(f"Postprocessing {self.name} sifted signal.")
@@ -123,15 +123,14 @@ class BaseSift(beam.PTransform):
             min_max_detections[key]["max"]
         ]
 
-        return (
-            signal[global_detection_range[0]:global_detection_range[-1]], 
-            start, 
-            end, 
-            encounter_ids,
-        )
+        sifted_signal = signal[global_detection_range[0]:global_detection_range[-1]]
+        audio_path = "No sift audio path stored."
+        detections_path = "No detections path stored."
+
+        return [(sifted_signal, start, end, encounter_ids, audio_path, detections_path)]
 
     def _plot_signal_detections(self, pcoll, min_max_detections, all_detections):
-        signal, start, end, encounter_ids = pcoll
+        signal, start, end, encounter_ids, _ = pcoll
         key = self._build_key(start, end, encounter_ids)
         
         min_max_detection_samples = [
@@ -246,16 +245,18 @@ class Butterworth(BaseSift):
         all_detections      = detections    | "List Detections"     >> beam.CombinePerKey(ListCombine())
         
         # full-input postprocess
-        sifted_output       = pcoll         | "Postprocess"         >> beam.Map(
+        sifted_output       = pcoll         | "Postprocess"         >> beam.ParDo(
             self._postprocess, 
             min_max_detections=beam.pvalue.AsDict(min_max_detections), 
         )
 
         if self.store:
-            sifted_output | "Store Sifted Audio" >> beam.ParDo(
+            results = sifted_output | "Store Sifted Audio" >> beam.ParDo(
                 self._store,
                 detections=beam.pvalue.AsDict(all_detections),
             )
+        else:
+            results = sifted_output
 
         # plots for debugging purposes
         if self.debug or self.plot:
@@ -265,22 +266,7 @@ class Butterworth(BaseSift):
                 all_detections=beam.pvalue.AsDict(all_detections),
             )
 
-        return sifted_output
-
-    def _get_filter_params(self):
-        return {
-            "lowcut": self.lowcut,
-            "highcut": self.highcut,
-            "order": self.order,
-            "output": self.output,
-        }
-
-    def _get_path_params(self):
-        path_params = self._get_filter_params()
-        path_params.pop("output")
-        path_params["threshold"] = self.threshold
-        path_params["name"] = self.name.lower()
-        return path_params
+        return results
 
     def _frequency_filter_sift(
             self,
@@ -325,23 +311,22 @@ class Butterworth(BaseSift):
 
         yield (key, peak_samples)
 
-    def _store(self, sifted_output, detections):
-        signal, start, end, encounter_ids = sifted_output
-        logging.info(f"Signal shape: {signal.shape}")
-        logging.info(f"Start: {start}")
-        logging.info(f"End: {end}")
-        logging.info(f"Encounter IDs: {encounter_ids}")
+    def _get_filter_params(self):
+        return {
+            "lowcut": self.lowcut,
+            "highcut": self.highcut,
+            "order": self.order,
+            "output": self.output,
+        }
 
-        key = self._build_key(start, end, encounter_ids)
+    def _get_path_params(self):
+        path_params = self._get_filter_params()
+        path_params.pop("output")
+        path_params["threshold"] = self.threshold
+        path_params["name"] = self.name.lower()
+        return path_params
 
-        if not isinstance(signal, np.ndarray):
-            signal = np.array(signal)
-        
-        if signal.shape[0] == 0:
-            logging.info(f"Empty sifted signal for {key}.")
-            return
-
-        # build paths 
+    def _get_export_paths(self, key):
         params_path = self.params_path_template.format(**self._get_path_params())
         audio_path = self.output_array_path_template.format(
             params=params_path,
@@ -354,6 +339,30 @@ class Butterworth(BaseSift):
             filename="detections.npy"
         )
 
+        if not self.is_local:
+            audio_path = os.path.join(self.workbucket,audio_path)
+            detections_path = os.path.join(self.workbucket,detections_path)
+
+        return audio_path, detections_path
+
+    def _store(self, sifted_output, detections):
+        signal, start, end, encounter_ids, audio_path, detections_path  = sifted_output
+        logging.info(f"Signal shape: {signal.shape}")
+        logging.info(f"Start: {start}")
+        logging.info(f"End: {end}")
+        logging.info(f"Encounter IDs: {encounter_ids}")
+
+        key = self._build_key(start, end, encounter_ids)
+
+        if not isinstance(signal, np.ndarray):
+            signal = np.array(signal)
+        
+        if signal.shape[0] == 0:
+            logging.info(f"Empty sifted signal for {key}.")
+            return [(signal, start, end, encounter_ids, audio_path, detections_path)]
+
+        audio_path, detections_path = self._get_export_paths(key)
+
         # upload metadata to table
         if self.is_local:
             self._store_local(
@@ -363,9 +372,6 @@ class Butterworth(BaseSift):
                 self._get_path_params(),
             )
         else:
-            audio_path = os.path.join(self.workbucket,audio_path)
-            detections_path = os.path.join(self.workbucket,detections_path)
-
             self._store_bigquery(
                 key, 
                 audio_path, 
@@ -384,6 +390,7 @@ class Butterworth(BaseSift):
             np.save(f, detections[key])
 
         logging.info(f"Stored sifted audio and detections for {key}.")
+        return [(signal, start, end, encounter_ids, audio_path, detections_path)]
 
     def _store_local(
         self, 
@@ -436,7 +443,6 @@ class Butterworth(BaseSift):
             custom_gcs_temp_location=self.temp_location,
             **self.write_params
         )
-
 
 
 class ListCombine(beam.CombineFn):

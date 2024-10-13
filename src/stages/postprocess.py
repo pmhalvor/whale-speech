@@ -46,7 +46,7 @@ class PostprocessLabels(beam.DoFn):
             ]
         }
 
-    def process(self, element, search_output):
+    def process(self, element, search_output, **kwargs):
         # convert element to dataframe
         classifications_df = self._build_classification_df(element)
 
@@ -57,7 +57,7 @@ class PostprocessLabels(beam.DoFn):
         joined_df = pd.merge(search_output_df, classifications_df, how="inner", on="encounter_id")
 
         # add paths 
-        final_df = self._add_paths(joined_df)
+        final_df = self._add_paths(joined_df, kwargs)
 
         logging.info(f"Final output: \n{final_df.head()}")
         logging.info(f"Final output columns: {final_df.columns}")
@@ -68,7 +68,7 @@ class PostprocessLabels(beam.DoFn):
 
     def _build_classification_df(self, element: Tuple) -> pd.DataFrame:
         # convert element to dataframe
-        df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications"])
+        df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications", "classification_path"])
         df = df[df["classifications"].apply(lambda x: len(x) > 0)]  # rm empty rows
 
         # explode encounter_ids
@@ -117,9 +117,21 @@ class PostprocessLabels(beam.DoFn):
         
         return pooled_score
 
-    def _add_paths(self, df: pd.DataFrame) -> pd.DataFrame:
-        df["audio_path"] = "NotImplemented"
-        df["classification_path"] = "NotImplemented"
+    def _add_paths(self, df: pd.DataFrame, kwargs) -> pd.DataFrame:
+        if kwargs.get("audio_output"):
+            audio_df = pd.DataFrame(
+                kwargs["audio_output"], 
+                columns=["audio", "start", "end", "encounter_id", "audio_path"]
+            ).explode("encounter_id").drop(columns=["audio", "start", "end"])
+            df = df.merge(audio_df, on=["encounter_id"], how="left")
+
+        if kwargs.get("sifted_audio"):
+            sifted_df = pd.DataFrame(
+                kwargs["sifted_audio"], 
+                columns=["audio", "start", "end", "encounter_id", "sift_audio_path", "detections_path"]
+            ).explode("encounter_id").drop(columns=["audio", "start", "end"])
+            df = df.merge(sifted_df, on=["encounter_id"], how="left")           
+
         df["img_path"] = df["displayImgUrl"] 
         df = df.drop(columns=["displayImgUrl"])
         return df
@@ -133,7 +145,7 @@ class PostprocessLabels(beam.DoFn):
         else:
             self._store_bigquery(df)
     
-    def _store_bigquery(self, element):
+    def _store_bigquery(self, df: pd.DataFrame):
         write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE
         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED
         method=beam.io.WriteToBigQuery.Method.FILE_LOADS
@@ -143,15 +155,13 @@ class PostprocessLabels(beam.DoFn):
         logging.info(f"Table: {self.table_id}")
         logging.info(f"Dataset: {self.dataset_id}")
         logging.info(f"Project: {self.project}")
-        logging.info(f"Schema: {self.schema}")
-        logging.info(f"Len element:  {len(element)}")
-        logging.info(f"Element keys: {element[0].keys()}")
+        logging.debug(f"Schema: {self.schema}")
+        logging.debug(f"Len element:  {len(df)}")
         
-        element | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        df.to_dict(orient="records") | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             self.table_id,
             dataset=self.dataset_id,
             project=self.project,
-            # "bioacoustics-2024.whale_speech.mapped_audio",
             schema=self.schema,
             write_disposition=write_disposition,
             create_disposition=create_disposition,
@@ -159,7 +169,6 @@ class PostprocessLabels(beam.DoFn):
             custom_gcs_temp_location=custom_gcs_temp_location
         )
 
-        yield element
 
     def _store_local(self, element):
         logging.info(f"Storing to local path: {self.output_path}")

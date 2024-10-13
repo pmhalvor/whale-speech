@@ -84,7 +84,6 @@ def quantized_preprocess(signal, batch_size):
 
     # expand dims
     signal_batches = [np.expand_dims(batch, axis=0) for batch in signal_batches]
-    breakpoint()
     
     logging.info(f"Split signal into {len(signal_batches)} batches of size {batch_size}.")
     logging.info(f"Size of final batch {signal_batches[0].shape}")

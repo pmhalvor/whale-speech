@@ -26,7 +26,6 @@ logging.getLogger().setLevel(logging.INFO)
 class BaseClassifier(beam.PTransform): 
     name = "BaseClassifier"
 
-
     def __init__(self, config: SimpleNamespace):
         self.config = config
         self.is_local = config.general.is_local
@@ -80,8 +79,9 @@ class BaseClassifier(beam.PTransform):
         }
 
     def _preprocess(self, pcoll):
-        signal, start, end, encounter_ids = pcoll
+        signal, start, end, encounter_ids, _, _ = pcoll
         key = self._build_key(start, end, encounter_ids)
+        logging.info(f"Classifying {key} with signal shape {signal.shape}")
 
         # Resample
         signal = self._resample(signal)
@@ -188,16 +188,10 @@ class BaseClassifier(beam.PTransform):
         return t, f, psd
 
     def _plot_audio(self, audio, start, key):
-        # plt.plot(audio)
-        # plt.xlabel('Samples')
-        # plt.xlim(0, len(audio))
-        # plt.ylabel('Energy')
-        # plt.title(f'Raw audio signal for {key}')
         with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
             min_max_samples = pickle.load(f)
         with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
             all_samples = pickle.load(f)
-        # plt.plot(audio) # TODO remove this if does not work properly
     
         def _plot_signal_detections(signal, min_max_detection_samples, all_samples):
             # TODO refactor plot_signal_detections in classify 
@@ -220,15 +214,15 @@ class BaseClassifier(beam.PTransform):
                 # shade window that resulted in detection
                 for detection in all_samples:
                     plt.axvspan(
-                        detection - 512/2, # TODO replace w/ window size from config
-                        detection + 512/2,
+                        detection - self.config.sift.window_size/2,
+                        detection + self.config.sift.window_size/2,
                         alpha=0.5,
                         color='r',
                         zorder=5, # on top of signal
                     )
 
             plt.legend(['Input signal', 'detection window', 'all detections']).set_zorder(10)
-            plt.xlabel(f'Samples (seconds * {16000} Hz)')  # TODO replace with sample rate from config
+            plt.xlabel(f'Samples (seconds * {self.config.audio.source_sample_rate} Hz)') 
             plt.ylabel('Amplitude (normalized and centered)') 
 
             title = f"Signal detections: {start.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -238,7 +232,7 @@ class BaseClassifier(beam.PTransform):
         _plot_signal_detections(audio, min_max_samples, all_samples)
 
     def _plot(self, output):
-        audio, start, end, encounter_ids, scores = output
+        audio, start, end, encounter_ids, scores, _ = output
         key = self._build_key(start, end, encounter_ids)
 
         if len(audio) == 0:
@@ -253,7 +247,6 @@ class BaseClassifier(beam.PTransform):
 
         # Plot spectrogram:
         plt.subplot(gs[0])
-        # self._plot_audio(audio, key)
         self._plot_audio(audio, start, key)
 
         # Plot spectrogram:
@@ -270,7 +263,7 @@ class BaseClassifier(beam.PTransform):
             params=self._get_params_path(),
             plot_name=key
         )
-        os.makedirs(os.path.dirname(plot_path), exist_ok=True)  # TODO refactor when running on GCP
+        filesystems.FileSystems.create(plot_path)
 
         plt.savefig(plot_path)
         plt.show() if self.show_plots else plt.close()
@@ -280,50 +273,31 @@ class BaseClassifier(beam.PTransform):
             **self.path_params
         )
 
-
-class WhaleClassifier(BaseClassifier):
-    def expand(self, pcoll):
-        key_batch       = pcoll             | "Preprocess"              >> beam.ParDo(self._preprocess)
-        batched_outputs = key_batch         | "Classify"                >> beam.ParDo(InferenceClient(self.config))
-        grouped_outputs = batched_outputs   | "Combine batched_outputs" >> beam.CombinePerKey(ListCombine())
-        outputs         = pcoll             | "Postprocess"             >> beam.Map(
-            self._postprocess,
-            grouped_outputs=beam.pvalue.AsDict(grouped_outputs), 
-        )
-
-        if self.store:
-            outputs | "Write classifications" >> beam.ParDo(self._store)
-
-        if self.plot_scores:
-            outputs | "Plot scores" >> beam.Map(self._plot)
-
-        logging.info(f"Finished {self.name} stage: {outputs}")
-        return outputs
-    
-    def _postprocess(self, pcoll, grouped_outputs):
-        signal, start, end, encounter_ids = pcoll
-        key = self._build_key(start, end, encounter_ids)
-        scores = grouped_outputs.get(key, [])
-        logging.info(f"Postprocessing {key} with signal {len(signal)} and scores {len(scores)}")
-        return signal, start, end, encounter_ids, scores
-
-    def _store(self, outputs):
-        audio, start, end, encounter_ids, scores = outputs
-        key = self._build_key(start, end, encounter_ids)
-
-        classifications_path = self.output_array_path_template.format(
+    def _get_export_path(self, key):
+        export_path = self.output_array_path_template.format(
             params=self._get_params_path(),
             key=key
         )
 
+        if not self.is_local:
+            export_path = os.path.join(self.workbucket, export_path)
+
+        return export_path
+
+    def _store(self, outputs):
+        audio, start, end, encounter_ids, scores, no_path = outputs
+        key = self._build_key(start, end, encounter_ids)
+
         if len(scores) == 0 or len(audio) == 0:
             logging.info(f"No detections for {key}. Skipping storage.")
-            return None
+            return [(audio, start, end, encounter_ids, scores, no_path)]
 
+        classifications_path = self._get_export_path(key)
+
+        # update metadata table
         if self.is_local:
             self._store_local(key, classifications_path)
         else:
-            classifications_path = os.path.join(self.workbucket, classifications_path)
             self._store_bigquery(key, classifications_path)
 
         # store classifications
@@ -331,13 +305,14 @@ class WhaleClassifier(BaseClassifier):
             logging.info(f"Storing sifted audio to {classifications_path}")
             np.save(f, np.array(scores).flatten())
 
+        return [(audio, start, end, encounter_ids, scores, classifications_path)]
+
     def _store_local(self, key, classifications_path):
         logging.info(f"Storing local classification for {key}")
         
         table_path = self.output_table_path_template.format(table_id=self.table_id)
 
         if not filesystems.FileSystems.exists(table_path):
-            # build parent dir if necessary 
             filesystems.FileSystems.create(table_path)
             df = pd.DataFrame([{
                 "key": key,
@@ -371,6 +346,34 @@ class WhaleClassifier(BaseClassifier):
             custom_gcs_temp_location=self.temp_location,
             **self.write_params
         )
+
+
+class WhaleClassifier(BaseClassifier):
+    def expand(self, pcoll):
+        key_batch       = pcoll             | "Preprocess"              >> beam.ParDo(self._preprocess)
+        batched_outputs = key_batch         | "Classify"                >> beam.ParDo(InferenceClient(self.config))
+        grouped_outputs = batched_outputs   | "Combine batched_outputs" >> beam.CombinePerKey(ListCombine())
+        outputs         = pcoll             | "Postprocess"             >> beam.ParDo(
+            self._postprocess,
+            grouped_outputs=beam.pvalue.AsDict(grouped_outputs), 
+        )
+
+        if self.store:
+            outputs = outputs | "Store classifications" >> beam.ParDo(self._store)
+
+        if self.plot_scores:
+            outputs | "Plot scores" >> beam.Map(self._plot)
+
+        logging.info(f"Finished {self.name} stage: {outputs}")
+        return outputs
+    
+    def _postprocess(self, pcoll, grouped_outputs):
+        signal, start, end, encounter_ids, _, _ = pcoll
+        key = self._build_key(start, end, encounter_ids)
+        scores = grouped_outputs.get(key, [])
+        logging.info(f"Postprocessing {key} with signal {len(signal)} and scores {len(scores)}")
+
+        return [(signal, start, end, encounter_ids, scores, "No classification path stored.")]
 
 
 class InferenceClient(beam.DoFn):

@@ -143,12 +143,12 @@ class RetrieveAudio(AudioTask):
                     self.source_sample_rate,
                 )
 
+            audio_path = self._store(key, audio, start_time, end_time) if self.store else None
 
-            if self.store:
-                self._store(key, audio, start_time, end_time, row.encounter_ids)
+            yield (audio, start_time, end_time, row.encounter_ids, audio_path)
+        #     preprocessed_rows.append((audio, start_time, end_time, row.encounter_ids, audio_path))
 
-            # Yield the audio and the search_results
-            yield audio, start_time, end_time, row.encounter_ids
+        # return preprocessed_rows
 
     def _preprocess(self, df: pd.DataFrame):
         df = self._build_time_frames(df)
@@ -288,7 +288,6 @@ class RetrieveAudio(AudioTask):
         audio: np.array, 
         start: datetime, 
         end: datetime, 
-        encounter_ids: List[str]
     ):
         file_path = self._get_export_path(key, start)
         logging.info(f"Writing audio to {file_path}")
@@ -299,6 +298,7 @@ class RetrieveAudio(AudioTask):
             self._store_local(key, file_path, start, end)
         else:
             logging.info(f"Updating table {self.table_id} in BigQuery")
+
             self._store_bigquery(key, file_path, start, end)
         
 
@@ -308,6 +308,7 @@ class RetrieveAudio(AudioTask):
         
 
         logging.info(f"Audio stored at {file_path}")
+        return file_path
 
     def _store_local(
         self, 
@@ -320,8 +321,8 @@ class RetrieveAudio(AudioTask):
 
         if not filesystems.FileSystems.exists(table_path):
             # build parent dir if necessary 
-            if not filesystems.FileSystems.exists(os.path.dirname(table_path)):
-                filesystems.FileSystems.mkdirs(os.path.dirname(table_path), exists_ok=True)
+            if not filesystems.FileSystems.exists(table_path):
+                filesystems.FileSystems.create(table_path)
             df = pd.DataFrame([{
                 "key": key,
                 "start": start.isoformat(),

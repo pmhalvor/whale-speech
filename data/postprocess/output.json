@@ -1,1 +1,15 @@
-[{"encounter_id":"9182","latitude":36.91,"longitude":-122.02,"start":"2016-12-21T00:49:30","end":"2016-12-21T00:50:30","pooled_score":0.2997462116,"img_path":"https://au-hw-media-m.happywhale.com/d40b9e6e-07cf-4f20-8cb4-4042ba22a00b.jpg","audio_path":"NotImplemented","classification_path":"NotImplemented"},{"encounter_id":"9182","latitude":36.91,"longitude":-122.02,"start":"2016-12-21T00:49:30","end":"2016-12-21T00:50:30","pooled_score":0.2997462116,"img_path":"https://au-hw-media-m.happywhale.com/d40b9e6e-07cf-4f20-8cb4-4042ba22a00b.jpg","audio_path":"NotImplemented","classification_path":"NotImplemented"}]
+[
+    {
+        "encounter_id": "9182",
+        "latitude": 36.91,
+        "longitude": -122.02,
+        "start": "2016-12-21T00:49:30",
+        "end": "2016-12-21T00:50:30",
+        "pooled_score": 0.2997462116,
+        "img_path": "https://au-hw-media-m.happywhale.com/d40b9e6e-07cf-4f20-8cb4-4042ba22a00b.jpg",
+        "audio_path": "data/audio/raw/key=20161221T004930-005030_9182/MARS-20161221T004930Z-16kHz.npy",
+        "classification_path": "data/classifications/butterworth/highcut=1500/lowcut=50/order=5/threshold=0.015/20161221T004930-005030_9182.npy",
+        "sift_audio_path": "data/audio/butterworth/highcut=1500/lowcut=50/order=5/threshold=0.015/key=20161221T004930-005030_9182/audio.npy",
+        "detections_path": "data/audio/butterworth/highcut=1500/lowcut=50/order=5/threshold=0.015/key=20161221T004930-005030_9182/detections.npy"
+    }
+]

@@ -154,7 +154,7 @@ pipeline:
     min_gap: 60  # 1 minute
     output_path: "data/postprocess/output.json"
     pooling: "average"
-    postprocess_table_id: "mapped_audio"
+    postprocess_table_id: "postprocessed"
     postprocess_table_schema: 
       encounter_id: 
         type: 'STRING'
@@ -178,6 +178,12 @@ pipeline:
         type: 'STRING'
         mode: 'NULLABLE'
       audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      sift_audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      detections_path: 
         type: 'STRING'
         mode: 'NULLABLE'
       classification_path: 
