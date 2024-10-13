@@ -6,8 +6,10 @@ Derived from <a href="https://docs.mbari.org/pacific-sound/notebooks/humpbackwha
 </sub>
 
 
-## Installation
-M1:
+## Getting started
+
+### Install
+#### M1:
 ```bash
 CONDA_SUBDIR=osx-arm64 conda create -n whale-speech python=3.11
 conda activate whale-speech
@@ -15,11 +17,16 @@ pip install -r requirements.txt
 ```
 
 
-Other:
+#### Other:
 ```bash
 conda create -n whale-speech python=3.11
 conda activate whale-speech
 pip install -r requirements.txt
+```
+
+### Run locally 
+```bash
+make local-run
 ```
 
 ## Pipeline description
