@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import os 
 
-from apache_beam.io.gcp.internal.clients import bigquery
+from apache_beam.io import filesystems
 
 from typing import Dict, Any, Tuple
 from types import SimpleNamespace
@@ -14,17 +14,39 @@ class PostprocessLabels(beam.DoFn):
     def __init__(self, config: SimpleNamespace):
         self.config = config
 
-        self.search_output_path_template = config.search.export_template
-        self.sifted_audio_path_template = config.sift.output_path_template
-        self.classification_path = config.classify.classification_path
+        # self.search_output_path_template = config.search.output_path_template
+        # self.sifted_audio_path_template = config.sift.output_array_path_template
+        # self.classification_path = config.classify.output_array_path_template
 
         self.pooling = config.postprocess.pooling
         self.project = config.general.project
         self.dataset_id = config.general.dataset_id
         self.table_id = config.postprocess.postprocess_table_id
 
+        # storage params
+        self.is_local = config.general.is_local
+        self.output_path = config.postprocess.output_path
+        self.project = config.general.project
+        self.dataset_id = config.general.dataset_id
+        self.table_id = config.postprocess.postprocess_table_id
+        self.columns = list(vars(config.postprocess.postprocess_table_schema))
+        self.schema = self._schema_to_dict(config.postprocess.postprocess_table_schema)
 
-    def process(self, element, search_output):
+
+    @staticmethod
+    def _schema_to_dict(schema):
+        return {
+            "fields": [
+                {
+                    "name": name, 
+                    "type": getattr(schema, name).type, 
+                    "mode": getattr(schema, name).mode
+                } 
+                for name in vars(schema)
+            ]
+        }
+
+    def process(self, element, search_output, **kwargs):
         # convert element to dataframe
         classifications_df = self._build_classification_df(element)
 
@@ -35,16 +57,18 @@ class PostprocessLabels(beam.DoFn):
         joined_df = pd.merge(search_output_df, classifications_df, how="inner", on="encounter_id")
 
         # add paths 
-        final_df = self._add_paths(joined_df)
+        final_df = self._add_paths(joined_df, kwargs)
 
         logging.info(f"Final output: \n{final_df.head()}")
         logging.info(f"Final output columns: {final_df.columns}")
+
+        self._store(final_df)       
 
         yield final_df.to_dict(orient="records")
 
     def _build_classification_df(self, element: Tuple) -> pd.DataFrame:
         # convert element to dataframe
-        df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications"])
+        df = pd.DataFrame([element], columns=["audio", "start", "end", "encounter_ids", "classifications", "classification_path"])
         df = df[df["classifications"].apply(lambda x: len(x) > 0)]  # rm empty rows
 
         # explode encounter_ids
@@ -68,8 +92,7 @@ class PostprocessLabels(beam.DoFn):
 
     def _build_search_output_df(self, search_output: Dict[str, Any]) -> pd.DataFrame:
         # convert search_output to dataframe
-        search_output = search_output.rename(columns={"id": "encounter_id"})
-        search_output["encounter_id"] = search_output["encounter_id"].astype(str)
+        search_output["encounter_id"] = search_output["id"].astype(str)
         search_output = search_output[[
             "encounter_id",
             "latitude",
@@ -94,48 +117,35 @@ class PostprocessLabels(beam.DoFn):
         
         return pooled_score
 
-    def _add_paths(self, df: pd.DataFrame) -> pd.DataFrame:
-        df["audio_path"] = "NotImplemented"
-        df["classification_path"] = "NotImplemented"
+    def _add_paths(self, df: pd.DataFrame, kwargs) -> pd.DataFrame:
+        if kwargs.get("audio_output"):
+            audio_df = pd.DataFrame(
+                kwargs["audio_output"], 
+                columns=["audio", "start", "end", "encounter_id", "audio_path"]
+            ).explode("encounter_id").drop(columns=["audio", "start", "end"])
+            df = df.merge(audio_df, on=["encounter_id"], how="left")
+
+        if kwargs.get("sifted_audio"):
+            sifted_df = pd.DataFrame(
+                kwargs["sifted_audio"], 
+                columns=["audio", "start", "end", "encounter_id", "sift_audio_path", "detections_path"]
+            ).explode("encounter_id").drop(columns=["audio", "start", "end"])
+            df = df.merge(sifted_df, on=["encounter_id"], how="left")           
+
         df["img_path"] = df["displayImgUrl"] 
         df = df.drop(columns=["displayImgUrl"])
         return df
 
-
-class WritePostprocess(beam.DoFn):
-    def __init__(self, config: SimpleNamespace):
-        self.config = config
-
-        self.is_local = config.general.is_local
-        self.output_path = config.postprocess.output_path
-        self.project = config.general.project
-        self.dataset_id = config.general.dataset_id
-        self.table_id = config.postprocess.postprocess_table_id
-        self.columns = list(vars(config.postprocess.postprocess_table_schema))
-        self.schema = self._schema_to_dict(config.postprocess.postprocess_table_schema)
-
-    def process(self, element):
-        if len(element) == 0:
+    def _store(self, df: pd.DataFrame):
+        if len(df) == 0:
             return
-
+        
         if self.is_local:
-            return self._write_local(element)
+            self._store_local(df)
         else:
-            return self._write_gcp(element)
+            self._store_bigquery(df)
     
-    def _schema_to_dict(self, schema):
-        return {
-            "fields": [
-                {
-                    "name": name, 
-                    "type": getattr(schema, name).type, 
-                    "mode": getattr(schema, name).mode
-                } 
-                for name in vars(schema)
-            ]
-        }
-
-    def _write_gcp(self, element):
+    def _store_bigquery(self, df: pd.DataFrame):
         write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE
         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED
         method=beam.io.WriteToBigQuery.Method.FILE_LOADS
@@ -145,15 +155,13 @@ class WritePostprocess(beam.DoFn):
         logging.info(f"Table: {self.table_id}")
         logging.info(f"Dataset: {self.dataset_id}")
         logging.info(f"Project: {self.project}")
-        logging.info(f"Schema: {self.schema}")
-        logging.info(f"Len element:  {len(element)}")
-        logging.info(f"Element keys: {element[0].keys()}")
+        logging.debug(f"Schema: {self.schema}")
+        logging.debug(f"Len element:  {len(df)}")
         
-        element | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        df.to_dict(orient="records") | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             self.table_id,
             dataset=self.dataset_id,
             project=self.project,
-            # "bioacoustics-2024.whale_speech.mapped_audio",
             schema=self.schema,
             write_disposition=write_disposition,
             create_disposition=create_disposition,
@@ -161,10 +169,11 @@ class WritePostprocess(beam.DoFn):
             custom_gcs_temp_location=custom_gcs_temp_location
         )
 
-        yield element
 
-    def _write_local(self, element):
-        if os.path.exists(self.output_path):
+    def _store_local(self, element):
+        logging.info(f"Storing to local path: {self.output_path}")
+
+        if filesystems.FileSystems.exists(self.output_path):
             stored_df = pd.read_json(self.output_path, orient="records")
 
             # convert encounter_id to str

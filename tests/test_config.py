@@ -14,7 +14,8 @@ def test_load_pipeline_config():
         'audio',
         'sift',
         'classify', 
-        'postprocess'
+        'postprocess',
+        'bigquery'
     ]
 
     actual_config = load_pipeline_config().__dict__

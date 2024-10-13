@@ -35,7 +35,6 @@ print_available_ram()
 
 dummy = np.random.random((1, 39124, 1)).astype(np.float32)
 print(f"   final input: dummy.shape = {dummy.shape}")
-breakpoint()
 # results = model(dummy, True, None)
 results = model.score(
     waveform=dummy, # waveform_exp,

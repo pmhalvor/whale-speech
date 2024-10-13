@@ -137,7 +137,6 @@ class MyTensorflowHubModelHandler(TFModelHandlerTensor):
         print(f"   batch.shape      = {batch}")
         print(f"   model            = {model}")
         print(f"   inference_args   = {inference_args}")
-        breakpoint()
 
         # serialize 
         batch = [batch[0].numpy().tolist()]
@@ -151,7 +150,6 @@ def tensor_inference_fn(
     model_id: Optional[str] = None,
 ):
   print_available_ram()
-  breakpoint()
   return model.score(waveform=batch, **inference_args)
 
 
