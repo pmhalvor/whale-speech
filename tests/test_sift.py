@@ -72,7 +72,8 @@ def sample_audio_results_row():
     start_time = datetime(2024, 7, 7, 23, 8, 0)
     end_time = datetime(2024, 7, 7, 23, 18, 0)
     encounter_ids = ["encounter1", "encounter2"]
-    yield  audio, start_time, end_time, encounter_ids
+    audio_path = "gs://project/dataset/data/audio/raw/20240707T230800-231800.wav"
+    yield  audio, start_time, end_time, encounter_ids, audio_path
 
 
 @pytest.fixture
@@ -91,7 +92,7 @@ def sample_batch():
 
 def test_build_key(config, sample_audio_results_row):
     # Assemble
-    _, start, end, encounter_ids = sample_audio_results_row
+    _, start, end, encounter_ids, _ = sample_audio_results_row
     
     expected_key = "20240707T230800-231800_encounter1_encounter2"
 
@@ -127,19 +128,21 @@ def test_postprocess(config, sample_audio_results_row):
         "20240707T230800-231800_encounter1_encounter2": {"min":0, "max": 5}  # samples
     }
 
-    expected_data = (
+    expected_data = [(
         np.array([0, 1, 2, 3, 4]),          # audio
         datetime(2024, 7, 7, 23, 8, 0),     # start_time
         datetime(2024, 7, 7, 23, 18, 0),    # end_time
-        ["encounter1", "encounter2"]        # encounter_ids
-    )
+        ["encounter1", "encounter2"],       # encounter_ids
+        'No sift audio path stored.', 
+        'No detections path stored.'
+    )]
 
     # Act
     actual_data = Butterworth(config)._postprocess(pcoll, min_max_detections)
 
     # Assert
     assert len(expected_data) == len(actual_data)
-    for expected, actual in zip(expected_data, actual_data):
+    for expected, actual in zip(expected_data[0], actual_data[0]):
         assert np.array_equal(expected, actual)
 
 

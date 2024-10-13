@@ -61,7 +61,9 @@ def example_input_row_small():
     start_time = datetime(2024, 7, 7, 23, 8, 0)
     end_time = datetime(2024, 7, 7, 23, 18, 0)
     encounter_ids = ["encounter1", "encounter2"]
-    yield  audio, start_time, end_time, encounter_ids
+    audio_path = "gs://project/dataset/project/data/audio/raw/audio_path"
+    detections_path = "gs://project/dataset/project/data/detections/detections_path"
+    yield  audio, start_time, end_time, encounter_ids, audio_path, detections_path
 
 @pytest.fixture
 def example_input_row_large():
@@ -69,7 +71,9 @@ def example_input_row_large():
     start_time = datetime(2024, 7, 7, 23, 8, 0)
     end_time = datetime(2024, 7, 7, 23, 18, 0)
     encounter_ids = ["encounter1", "encounter2"]
-    yield  audio, start_time, end_time, encounter_ids
+    audio_path = "gs://project/dataset/project/data/audio/raw/audio_path"
+    detections_path = "gs://project/dataset/project/data/detections/detections_path"
+    yield  audio, start_time, end_time, encounter_ids, audio_path, detections_path
 
 
 @pytest.fixture
@@ -128,20 +132,21 @@ def test_postprocess(example_config, example_input_row_small, example_grouped_ou
     # Arrange
     input_row = example_input_row_small
 
-    expected = (
+    expected = [(
         np.array([0., 1., 2., 3., 4., 5., 4., 3., 2., 1.]), # audio
         datetime(2024, 7, 7, 23, 8, 0),                     # start_time
         datetime(2024, 7, 7, 23, 18, 0),                    # end_time
         ["encounter1", "encounter2"],                       # encounter_ids
-        [0.3, 0.7, 0.2, 0.6]                                # scores
-    )
+        [0.3, 0.7, 0.2, 0.6],                               # scores
+        "No classification path stored."                    # classification_path, 
+    )]
 
     # Act
     actual = WhaleClassifier(example_config)._postprocess(input_row, example_grouped_outputs)
 
     # Assert
     assert len(expected) == len(actual)
-    for e, a in zip(expected, actual):
+    for e, a in zip(expected[0], actual[0]):
         if isinstance(e, np.ndarray):
             np.testing.assert_almost_equal(e, a, decimal=6)
         else:
