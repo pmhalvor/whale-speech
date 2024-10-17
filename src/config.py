@@ -1,7 +1,5 @@
-
 from types import SimpleNamespace
 
-import apache_beam as beam
 import argparse
 import os 
 import yaml
@@ -27,9 +25,9 @@ else:
 
 def add_write_params(config):
     config["bigquery"] = {
-        "method": beam.io.WriteToBigQuery.Method.FILE_LOADS,
-        "create_disposition": beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        "write_disposition": beam.io.BigQueryDisposition.WRITE_APPEND  # WRITE_APPEND or WRITE_TRUNCATE
+        "method": "FILE_LOADS", # beam.io.WriteToBigQuery.Method.FILE_LOADS,
+        "create_disposition": "CREATE_IF_NEEDED",  # beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        "write_disposition": "WRITE_APPEND",  # beam.io.BigQueryDisposition.WRITE_APPEND  # or WRITE_TRUNCATE
     }
     return config
 

@@ -10,8 +10,6 @@ six
 
 tensorflow
 tensorflow_hub
-tensorflow_text
-tflite
 
 librosa
 soundfile
