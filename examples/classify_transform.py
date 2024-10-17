@@ -1,3 +1,8 @@
+"""
+Beam PTransform for classifying whale audio. 
+Gets stuck on classification, either due to memroy issues or model serialization. 
+Kept for reference, but replaced by InferenceClient in classify.py.
+"""
 from apache_beam.io import filesystems
 from datetime import datetime
 
@@ -92,7 +97,6 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
         self.score_fn = self.model.signatures['score']
         self.metadata_fn = self.model.signatures['metadata']
 
-    
     def expand(self, pcoll):
         return (
             pcoll
@@ -101,7 +105,6 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
             | "Postprocess" >> beam.Map(self._postprocess)
         )
     
-
     def _classify(self, pcoll, ):
         key, signal = pcoll
     
@@ -159,7 +162,6 @@ class GoogleHumpbackWhaleClassifier(BaseClassifier):
         plt.xlabel('Seconds')
         plt.ylabel('Frequency (Hz)')
         plt.title(f'Calibrated spectrum levels, 16 {self.sample_rate / 1000.0} kHz data')
-
 
     def _plot_scores(self, pcoll, scores, med_filt_size=None):
         audio, start, end, encounter_ids = pcoll

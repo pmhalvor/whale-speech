@@ -1,0 +1,23 @@
+pipeline:
+  general:
+    verbose: true
+    debug: true
+    show_plots: false
+    is_local: false
+  
+
+  audio:
+    skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
+
+  sift:
+    max_duration: 600  # seconds
+    plot: true
+    show_plot: false
+    window_size: 512
+
+  classify:
+    plot_scores: true
+
+  postprocess:
+    min_gap: 60  # 1 minute
+    confidence_threshold: 0.5

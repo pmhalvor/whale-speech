@@ -1,0 +1,191 @@
+pipeline:
+  general:
+    verbose: true
+    debug: true
+    show_plots: false
+    is_local: false
+
+    # gcp - bigquery
+    project: "bioacoustics-2024"
+    dataset_id: "whale_speech"
+    workbucket: "gs://bioacoustics/whale-speech"
+    temp_location: "gs://bioacoustics/whale-speech/temp"
+
+    # gcp - storage
+    tables:
+      - "raw_audio"
+      - "sifted_audio"
+      - "classifications"
+      - "mapped_audio"
+      - "geometry_search"
+
+    partition_columns:
+      - "encounter_id"
+      - "start"
+      - "end"
+      - "img_path"
+      - "audio_path"
+      - "classification_path"
+      - "sift_audio_path"
+      - "sift_detections_path"
+
+  input:
+    start: "2016-12-21T00:30:00"
+    end: "2016-12-21T00:45:00"
+    timezone: "America/Los_Angeles"
+  
+  search:
+    output_path_template: "data/table/{table_id}/geofile={geofile}/encounters.csv"
+    filename: "monterey_bay_50km"
+    geometry_file_path_template: "data/geo/{filename}.geojson"
+    species: "humpback_whale"
+    search_columns:
+      - "id"
+      - "latitude"
+      - "longitude"
+      - "startDate"
+      - "startTime"
+      - "endTime"
+      - "timezone"
+      - "displayImgUrl"
+    search_table_id: "geometry_search"
+    search_table_schema: 
+      encounter_id: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      encounter_time: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      longitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      latitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      img_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+
+  audio:
+    url_template: "https://pacific-sound-16khz.s3.amazonaws.com/{year}/{month:02}/{filename}"
+    filename_template: "MARS-{year}{month:02}{day:02}T000000Z-16kHz.wav"
+    source_sample_rate: 16000
+    margin: 30 # TODO set to 900  # seconds  
+    offset: 13 # TODO set to 0    # hours
+    output_array_path_template: "data/audio/raw/key={key}/{filename}"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
+    skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
+    audio_table_id: "raw_audio"
+    store_audio: true
+    audio_table_schema:
+      key: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      audio_path: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      start: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      end: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+
+  sift:
+    output_array_path_template: "data/audio/{params}/key={key}/{filename}"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
+    max_duration: 600  # seconds
+    plot: true
+    show_plot: false
+    plot_path_template: "data/plots/{params}/{key}.png"
+    window_size: 512
+    store_sift_audio: true
+    sift_table_id: "sifted_audio"
+    sift_table_schema:
+      key: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      sift_audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      sift_detections_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      params: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+
+    # Specific sift-mechanism parameters
+    butterworth:
+      params_path_template: "{name}/highcut={highcut}/lowcut={lowcut}/order={order}/threshold={threshold}"
+      highcut: 1500
+      lowcut: 50
+      order: 5
+      output: "sos"  # "sos" or "ba" 
+      sift_threshold: 0.015
+
+  classify:
+    batch_duration:  600  # seconds
+
+    model_sample_rate: 10000
+    model_uri: https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1
+    inference_url: "http://127.0.0.1:5000/predict"
+    inference_retries: 3
+    med_filter_size: 3
+
+    plot_scores: true
+    hydrophone_sensitivity: -168.8
+    plot_path_template: "data/plots/results/{params}/{plot_name}.png"
+    output_array_path_template: "data/classifications/{params}/{key}.npy"
+    output_table_path_template: "data/table/{table_id}/metadata.json"
+
+    store_classifications: true
+    classification_table_id: "classifications"
+    classification_table_schema:
+      key: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      classifications_path: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+
+  postprocess:
+    confidence_threshold: 0.5
+    min_gap: 60  # 1 minute
+    output_path: "data/postprocess/output.json"
+    pooling: "average"
+    postprocess_table_id: "postprocessed"
+    postprocess_table_schema: 
+      encounter_id: 
+        type: 'STRING'
+        mode: 'REQUIRED'
+      latitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      longitude: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      start: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      end: 
+        type: 'TIMESTAMP'
+        mode: 'REQUIRED'
+      pooled_score: 
+        type: 'FLOAT64'
+        mode: 'REQUIRED'
+      img_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      sift_audio_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      detections_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'
+      classification_path: 
+        type: 'STRING'
+        mode: 'NULLABLE'

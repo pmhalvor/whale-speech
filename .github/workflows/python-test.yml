@@ -3,10 +3,10 @@ name: Python Tests
 on:
   push:
     branches:
-      - master  # Runs on push to the master branch
+      - main  # Runs on push to the main branch
   pull_request:
     branches:
-      - master  # Runs on pull requests to the master branch
+      - main  # Runs on pull requests to the main branch
 
 jobs:
   test:
@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.11] # [3.9, 3.11]  # You can add or remove Python versions to test against
+        python-version: [3.11] 
 
     steps:
     - name: Checkout repository
