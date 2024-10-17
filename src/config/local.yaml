@@ -17,7 +17,7 @@ pipeline:
   classify:
     batch_duration:  600  # seconds
     inference_retries: 3
-    plot_scores: true
+    plot_scores: false
 
   postprocess:
     min_gap: 60  # 1 minute

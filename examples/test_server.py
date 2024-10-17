@@ -3,12 +3,12 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description='Load config and override with command-line arguments.')
-parser.add_argument('--model-uri', type=str, default='0.0.0.0', required=False)
+parser.add_argument('--inference_url', type=str, default='0.0.0.0', required=False)
 parser.add_argument('--port', type=str, default='5000', required=False)
 
 args = parser.parse_args()
 
-model_uri = args.model_uri
+inference_url = args.inference_url
 port = args.port
 
 data = {
@@ -18,5 +18,5 @@ data = {
     ]*10_000, 
 }
 
-response = requests.post(f'http://{model_uri}:{port}/predict', json=data)
+response = requests.post(f'http://{inference_url}:{port}/predict', json=data)
 print(response.json())

@@ -188,16 +188,18 @@ class BaseClassifier(beam.PTransform):
         return t, f, psd
 
     def _plot_audio(self, audio, start, key):
-        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
-            min_max_samples = pickle.load(f)
-        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
-            all_samples = pickle.load(f)
-    
-        def _plot_signal_detections(signal, min_max_detection_samples, all_samples):
+        try:
+            with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
+                min_max_samples = pickle.load(f)
+            with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
+                all_samples = pickle.load(f)
+        except FileNotFoundError:
+            min_max_samples = []
+            all_samples = []
+
+        def _plot_signal_detections(min_max_detection_samples, all_samples):
             # TODO refactor plot_signal_detections in classify 
             logging.info(f"Plotting signal detections: {min_max_detection_samples}")
-
-            plt.plot(signal)
             
             # NOTE: for legend logic, plot min_max window first
             if len(min_max_detection_samples):
@@ -228,8 +230,10 @@ class BaseClassifier(beam.PTransform):
             title = f"Signal detections: {start.strftime('%Y-%m-%d %H:%M:%S')}"
             plt.title(title) 
 
-
-        _plot_signal_detections(audio, min_max_samples, all_samples)
+        plt.plot(audio)
+        plt.xlabel(f'Samples (seconds * {self.config.audio.source_sample_rate} Hz)') 
+        plt.ylabel('Amplitude (normalized and centered)') 
+        _plot_signal_detections(min_max_samples, all_samples)
 
     def _plot(self, output):
         audio, start, end, encounter_ids, scores, _ = output
@@ -384,7 +388,7 @@ class InferenceClient(beam.DoFn):
 
     def process(self, element):
         key, batch = element
-        logging.info(f"Sending batch to inference: {key} with {len(batch)} samples")
+        logging.info(f"Sending batch {key} with {len(batch)} samples to inference at: {self.inference_url}")
 
         # skip empty batches
         if len(batch) == 0:

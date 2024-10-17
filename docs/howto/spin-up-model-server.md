@@ -91,7 +91,7 @@ curl ifconfig.me
 
 Using the returned external IP address, you can test that your model running in your Google Compute Engine is accessible to the outside world by running the below command on your local machine:
 ```bash
-python examples/test_model_server.py --model-uri your_external_ip --port 5000
+python examples/test_model_server.py --inference_url your_external_ip --port 5000
 ```
 
 You should get a result similar to the below:
