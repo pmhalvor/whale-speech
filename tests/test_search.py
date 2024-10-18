@@ -1,8 +1,5 @@
-from datetime import datetime
-
 import pytest
 import pandas as pd
-import numpy as np
 
 from stages.search import GeometrySearch
 from types import SimpleNamespace
@@ -36,7 +33,7 @@ def config():
             )
         ),
         general=SimpleNamespace(
-            is_local=True,
+            filesystem="local",
             project="project", 
             dataset_id="dataset_id",
             temp_location="temp_location"

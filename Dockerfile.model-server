@@ -1,0 +1,12 @@
+FROM python:3.11-slim-bullseye
+
+COPY src/model_server.py /home/src/model_server.py
+COPY src/config.py /home/src/config.py
+COPY src/config/ /home/src/config/
+COPY requirements/model-requirements.txt /home/requirements.txt
+
+WORKDIR /home
+
+RUN pip install -r requirements.txt
+
+CMD [ "python", "src/model_server.py" ]

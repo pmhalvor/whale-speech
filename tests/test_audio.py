@@ -27,7 +27,7 @@ def config():
         ),
         general=SimpleNamespace(
             debug = True,
-            is_local = True,
+            filesystem = "local",
             project="project", 
             dataset_id="dataset_id",
             workbucket = "workbucket",

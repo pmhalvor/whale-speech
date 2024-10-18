@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--deduplicate", action="store_true", help="Dedupliacte BigQuery tables (config.general.tables)")
     args = parser.parse_args()
 
-    if config.general.is_local:
+    if config.general.filesystem == "local":
         logging.info("Running in local mode. Exiting.")
         exit()
 

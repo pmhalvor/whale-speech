@@ -5,6 +5,7 @@ plots/
 model/
 hide/
 table/
+env.sh 
 
 # Python basic ignores
 # Byte-compiled / optimized / DLL files

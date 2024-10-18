@@ -31,7 +31,7 @@ class BaseSift(beam.PTransform):
     def __init__(self, config: SimpleNamespace):
         # general params
         self.debug = config.general.debug
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
         self.sample_rate = config.audio.source_sample_rate
         self.store = config.sift.store_sift_audio
 
@@ -339,7 +339,7 @@ class Butterworth(BaseSift):
             filename="detections.npy"
         )
 
-        if not self.is_local:
+        if self.filesystem == "gcp":
             audio_path = os.path.join(self.workbucket,audio_path)
             detections_path = os.path.join(self.workbucket,detections_path)
 
@@ -364,20 +364,22 @@ class Butterworth(BaseSift):
         audio_path, detections_path = self._get_export_paths(key)
 
         # upload metadata to table
-        if self.is_local:
+        if self.filesystem == "local":
             self._store_local(
                 key, 
                 audio_path, 
                 detections_path,
                 self._get_path_params(),
             )
-        else:
+        elif self.filesystem == "gcp":
             self._store_bigquery(
                 key, 
                 audio_path, 
                 detections_path,
                 self._get_path_params(),
             )
+        else:
+            raise ValueError(f"Unsupported filesystem: {self.filesystem}")
 
         # store sifted audio
         with filesystems.FileSystems.create(audio_path) as f:

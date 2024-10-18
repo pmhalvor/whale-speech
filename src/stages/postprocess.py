@@ -24,7 +24,7 @@ class PostprocessLabels(beam.DoFn):
         self.table_id = config.postprocess.postprocess_table_id
 
         # storage params
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
         self.output_path = config.postprocess.output_path
         self.project = config.general.project
         self.dataset_id = config.general.dataset_id
@@ -140,10 +140,12 @@ class PostprocessLabels(beam.DoFn):
         if len(df) == 0:
             return
         
-        if self.is_local:
+        if self.filesystem == "local":
             self._store_local(df)
-        else:
+        elif self.filesystem == "gcp":
             self._store_bigquery(df)
+        else:
+            raise ValueError(f"Filesystem {self.filesystem} not supported.")
     
     def _store_bigquery(self, df: pd.DataFrame):
         write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE
