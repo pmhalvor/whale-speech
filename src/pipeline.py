@@ -14,7 +14,8 @@ config = load_pipeline_config()
 def run():
     # Initialize pipeline options
     pipeline_options = PipelineOptions(
-        # runner="DataflowRunner",
+        runner="DataflowRunner",
+        region="us-central1",
         project=config.general.project,
         temp_location=config.general.temp_location,
     )
