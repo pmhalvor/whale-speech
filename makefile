@@ -63,3 +63,33 @@ build-push-pipeline-worker: build-pipeline-worker push-pipeline-worker
 
 test-server:
 	python3 examples/test_server.py
+
+run-dataflow:
+	python3 src/pipeline.py \
+		--job_name "whale-speech-$(GIT_SHA)" \
+		--filesystem gcp \
+		--inference_url $(INFERENCE_URL) \
+		--runner DataflowRunner \
+		--region us-central1 \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
+		--start "2024-07-11" \
+		--end "2024-07-11" \
+		--offset 0 \
+		--margin 900
+
+run-direct:
+	python3 src/pipeline.py \
+		--job_name "whale-speech-$(GIT_SHA)" \
+		--filesystem gcp \
+		--inference_url $(INFERENCE_URL) \
+		--runner DirectRunner \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
+		--start "2024-07-11" \
+		--end "2024-07-11" \
+		--offset 0 \
+		--margin 900
+
+
+rebuild-run-dataflow: build-push-pipeline-worker run-dataflow
+
+rebuild-run-direct: build-push-pipeline-worker run-direct
