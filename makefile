@@ -43,10 +43,13 @@ push:
 	docker push $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME)
 
 build-model-server:
-	docker build -t $(MODEL_SERVER_IMAGE_NAME) -f Dockerfile.model-server .
+	docker build -t $(MODEL_SERVER_IMAGE_NAME) --platform linux/amd64 -f Dockerfile.model-server .
 
 push-model-server:
 	docker tag $(MODEL_SERVER_IMAGE_NAME) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
 	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
 
 build-push-model-server: build-model-server push-model-server
+
+test-server:
+	python3 examples/test_server.py

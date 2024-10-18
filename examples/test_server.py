@@ -1,15 +1,8 @@
 import requests 
-import argparse
+import os
 
 
-parser = argparse.ArgumentParser(description='Load config and override with command-line arguments.')
-parser.add_argument('--inference_url', type=str, default='0.0.0.0', required=False)
-parser.add_argument('--port', type=str, default='5000', required=False)
-
-args = parser.parse_args()
-
-inference_url = args.inference_url
-port = args.port
+inference_url = os.environ.get("INFERENCE_URL", "0.0.0.0:5000/predict")
 
 data = {
     "key": "encouter1",
@@ -18,5 +11,5 @@ data = {
     ]*10_000, 
 }
 
-response = requests.post(f'http://{inference_url}:{port}/predict', json=data)
+response = requests.post(inference_url, json=data)
 print(response.json())
