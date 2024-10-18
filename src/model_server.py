@@ -58,6 +58,6 @@ def predict():
 if __name__ == "__main__":
     logger.info(f"Host: {config.general.host} port: {config.general.port}")
 
-    port = os.environ.get('PORT', config.general.port)
+    port = os.environ.get('PORT', 8080)
 
     app.run(host=config.general.host, port=port, debug=config.general.debug)
