@@ -13,4 +13,4 @@ RUN apt-get update && apt-get install -y \
     gcc
 RUN pip install -r requirements.txt
 
-# ENTRYPOINT ["python3", "src/pipeline.py"]
+ENTRYPOINT ["python3", "src/pipeline.py"]

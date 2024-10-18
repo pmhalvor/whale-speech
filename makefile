@@ -37,11 +37,13 @@ run:
 	$(ENV_LOCATION)/bin/python3 src/pipeline.py
 
 build:
-	docker build -t $(PIPELINE_IMAGE_NAME) .
+	docker build -t $(PIPELINE_IMAGE_NAME) --platform linux/amd64 .
 
 push:
 	docker tag $(PIPELINE_IMAGE_NAME) $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME)
 	docker push $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME)
+
+build-push: build push
 
 build-model-server:
 	docker build -t $(MODEL_SERVER_IMAGE_NAME) --platform linux/amd64 -f Dockerfile.model-server .
