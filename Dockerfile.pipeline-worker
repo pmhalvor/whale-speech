@@ -1,6 +1,6 @@
 FROM apache/beam_python3.11_sdk
 
-COPY src/ /home/src/
+COPY src/ /home
 COPY requirements/requirements.txt /home/requirements.txt
 COPY data/geo /home/data/geo
 

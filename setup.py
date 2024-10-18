@@ -17,6 +17,6 @@ setuptools.setup(
         "six",
         "librosa",
         "soundfile",
-        "apache-beam[gcp]"
+        "apache-beam[gcp]",
     ]
 )
