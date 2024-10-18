@@ -22,7 +22,7 @@ class AudioTask(beam.DoFn):
 
     def __init__(self, config):
         self.debug = config.general.debug
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
 
         self.margin = config.audio.margin
         self.offset = config.audio.offset
@@ -90,7 +90,7 @@ class AudioTask(beam.DoFn):
             filename=filename
         )
 
-        if not self.is_local:
+        if self.filesystem == "gcp":
             file_path = os.path.join(
                 self.workbucket,
                 file_path
@@ -293,17 +293,17 @@ class RetrieveAudio(AudioTask):
         logging.info(f"Writing audio to {file_path}")
         logging.info(f"Audio shape: {audio.shape}")
   
-        if self.is_local:
+        if self.filesystem == "local":
             logging.info(f"Updating table {self.table_id} locally")
             self._store_local(key, file_path, start, end)
-        else:
+        elif self.filesystem == "gcp":
             logging.info(f"Updating table {self.table_id} in BigQuery")
-
             self._store_bigquery(key, file_path, start, end)
-        
+        else:
+            raise ValueError(f"Invalid filesystem: {self.filesystem}")
 
         with filesystems.FileSystems.create(file_path) as f:
-            # same for local and gsc storage
+            # same for local and gcs storage
             np.save(f, audio)
         
 

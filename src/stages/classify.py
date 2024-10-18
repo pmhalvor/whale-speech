@@ -28,7 +28,7 @@ class BaseClassifier(beam.PTransform):
 
     def __init__(self, config: SimpleNamespace):
         self.config = config
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
         self.source_sample_rate = config.audio.source_sample_rate
 
         self.batch_duration     = config.classify.batch_duration
@@ -283,7 +283,7 @@ class BaseClassifier(beam.PTransform):
             key=key
         )
 
-        if not self.is_local:
+        if self.filesystem == "gcp":
             export_path = os.path.join(self.workbucket, export_path)
 
         return export_path
@@ -299,10 +299,12 @@ class BaseClassifier(beam.PTransform):
         classifications_path = self._get_export_path(key)
 
         # update metadata table
-        if self.is_local:
+        if self.filesystem == "local":
             self._store_local(key, classifications_path)
-        else:
+        elif self.filesystem == "gcp":
             self._store_bigquery(key, classifications_path)
+        else:
+            raise ValueError(f"Unsupported filesystem: {self.filesystem}")
 
         # store classifications
         with filesystems.FileSystems.create(classifications_path) as f:

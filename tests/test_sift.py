@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 from stages.sift import BaseSift, Butterworth
-from unittest.mock import patch
 from types import SimpleNamespace
 
 
@@ -46,7 +45,7 @@ def config():
         ),
         general=SimpleNamespace(
             debug = True,
-            is_local = True,
+            filesystem = "local",
             project="project", 
             dataset_id="dataset_id",
             workbucket = "workbucket",

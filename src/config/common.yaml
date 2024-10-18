@@ -3,7 +3,7 @@ pipeline:
     verbose: true
     debug: true
     show_plots: false
-    is_local: false
+    filesystem: "local"
     host: "0.0.0.0"
     port: 5000
 

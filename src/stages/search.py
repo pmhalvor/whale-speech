@@ -13,7 +13,7 @@ class GeometrySearch(beam.DoFn):
 
     def __init__(self, config: SimpleNamespace):
         self.config = config
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
 
         self.species = config.search.species
 
@@ -100,7 +100,7 @@ class GeometrySearch(beam.DoFn):
     def _store(self, search_results):
         rows = self._convert_to_table_rows(search_results)
 
-        if self.is_local:
+        if self.filesystem == "local":
             # convert back to dataframe w7 correct columns 
             search_results = pd.DataFrame(rows)
             if not filesystems.FileSystems.exists(self.output_path):
@@ -114,7 +114,7 @@ class GeometrySearch(beam.DoFn):
                 search_results.drop_duplicates(inplace=True)
                 search_results.to_csv(self.output_path, index=False)
 
-        else:
+        elif self.filesystem == "gcp":
             logging.info(f"search_results.columns: {search_results.columns}")
 
             rows | f"Update {self.table_id}" >> beam.io.WriteToBigQuery(
@@ -125,6 +125,8 @@ class GeometrySearch(beam.DoFn):
                 custom_gcs_temp_location=self.temp_location,
                 **self.write_params
             )
+        else:
+            raise ValueError(f"Filesystem {self.filesystem} not supported.")
 
         logging.info(f"Stored search results in {self.output_path}")
 
