@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import tensorflow_hub as hub
+import os 
 import numpy as np
 import tensorflow as tf
 
@@ -57,5 +58,6 @@ def predict():
 if __name__ == "__main__":
     logger.info(f"Host: {config.general.host} port: {config.general.port}")
 
-    app.run(host=config.general.host, port=config.general.port, debug=True)
+    port = os.environ.get('PORT', config.general.port)
 
+    app.run(host=config.general.host, port=port, debug=config.general.debug)
