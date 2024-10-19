@@ -38,7 +38,7 @@ pipeline:
   
   search:
     output_path_template: "data/table/{table_id}/geofile={geofile}/encounters.csv"
-    filename: "monterey_bay_50km"
+    filename: "monterey_bay_20km"
     geometry_file_path_template: "data/geo/{filename}.geojson"
     species: "humpback_whale"
     search_columns:
@@ -127,7 +127,7 @@ pipeline:
       sift_threshold: 0.015
 
   classify:
-    batch_duration:  600  # seconds
+    batch_duration:  60  # seconds
 
     model_sample_rate: 10000
     model_uri: https://www.kaggle.com/models/google/humpback-whale/TensorFlow2/humpback-whale/1

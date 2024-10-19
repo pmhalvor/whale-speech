@@ -71,11 +71,17 @@ run-dataflow:
 		--inference_url $(INFERENCE_URL) \
 		--runner DataflowRunner \
 		--region us-central1 \
+		--worker_machine_type=n1-highmem-8 \
+		--disk_size_gb=100 \
+		--num_workers=8 \
+		--max_num_workers=8 \
+		--autoscaling_algorithm=THROUGHPUT_BASED \
 		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
 		--start "2024-07-11" \
 		--end "2024-07-11" \
 		--offset 0 \
-		--margin 900
+		--margin 1800 \
+		--batch_duration 60 
 
 run-direct:
 	python3 src/pipeline.py \
@@ -87,9 +93,12 @@ run-direct:
 		--start "2024-07-11" \
 		--end "2024-07-11" \
 		--offset 0 \
-		--margin 900
+		--margin 600
 
 
 rebuild-run-dataflow: build-push-pipeline-worker run-dataflow
 
 rebuild-run-direct: build-push-pipeline-worker run-direct
+
+show-url:
+	echo $(INFERENCE_URL)
