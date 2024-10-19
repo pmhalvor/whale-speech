@@ -1,4 +1,6 @@
-# How to spin up model server
+# How to spin up model server VM
+
+NOTE: VM for model serving is no longer used for this project. See [Model server as CloudRun](docs/howto/model-server-as-cloud-run.md) for the current model serving method. This doc on VMs is kept for reference.
 
 Our pipeline requires a publically accessible model server for classifications. 
 While this code is included in this repo, users will still need to spin up their own server.
