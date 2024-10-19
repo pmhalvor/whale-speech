@@ -41,5 +41,16 @@ def run():
         )
 
 
+def setup():
+    import gcp
+    gcp.initialize()
+
+def teardown():
+    import gcp
+    gcp.deduplicate()
+
+
 if __name__ == "__main__":
+    setup()
     run()
+    teardown()
