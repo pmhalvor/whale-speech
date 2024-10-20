@@ -42,7 +42,7 @@ class GeometrySearch(beam.DoFn):
 
     def process(self, element):
         start = self._preprocess_date(element.get('start'))
-        end = self._preprocess_date(element.get('end'))
+        end = self._preprocess_date(element.get('end', start))
         
         geometry_file = self._get_geometry_file()
         export_file = self._get_file_buffer("csv")

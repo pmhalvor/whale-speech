@@ -105,12 +105,13 @@ run-dataflow:
 		--num_workers=8 \
 		--max_num_workers=8 \
 		--autoscaling_algorithm=THROUGHPUT_BASED \
-		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):$(TAG) \
-		--start "2024-07-11" \
-		--end "2024-07-11" \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
+		--start "2024-09-09" \
+		--end "2024-09-12" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
+# --worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME):latest \
 
 run-direct:
 	python3 src/pipeline.py \
@@ -118,11 +119,12 @@ run-direct:
 		--filesystem gcp \
 		--inference_url $(INFERENCE_URL) \
 		--runner DirectRunner \
-		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
-		--start "2024-07-11" \
-		--end "2024-07-11" \
+		--worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME) \
+		--start "2024-09-09" \
+		--end "2024-09-12" \
 		--offset 0 \
-		--margin 600
+		--margin 1800 \
+		--batch_duration 60 
 
 
 rebuild-run-dataflow: build-push-pipeline-worker run-dataflow
