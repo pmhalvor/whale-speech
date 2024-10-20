@@ -1,4 +1,4 @@
-VERSION := 0.0.0
+VERSION := 1.0.0
 GIT_SHA := $(shell git rev-parse --short HEAD)
 TAG := $(VERSION)-$(GIT_SHA)
 PIPELINE_IMAGE_NAME := whale-speech/pipeline
