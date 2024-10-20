@@ -159,8 +159,12 @@ class RetrieveAudio(AudioTask):
     def _build_time_frames(self, df: pd.DataFrame):
         margin = self.margin
 
-        df["startTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["startTime"].astype(str))
-        df["endTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["endTime"].astype(str))
+        # handle time formats of HH:MM:SS and HH:MM:SS.MMMMMM
+        df["startTime"] = df["startTime"].astype(str).apply(lambda x: x.split(".")[0])
+        df["endTime"] = df["endTime"].astype(str).apply(lambda x: x.split(".")[0])
+        
+        df["startTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["startTime"])
+        df["endTime"] = pd.to_datetime(df["startDate"].astype(str) + ' ' + df["endTime"])
 
         df["start_time"] = df.startTime - timedelta(seconds=margin)
         df["end_time"] = df.endTime + timedelta(seconds=margin)
