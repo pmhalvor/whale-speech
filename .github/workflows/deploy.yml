@@ -1,0 +1,52 @@
+name: Build Push & Deploy
+
+on:
+  push:
+    branches:
+      - main  # Runs on push to the main branch
+      - refactor-for-dataflow-runner # TODO remove this line
+  pull_request:
+    branches:
+      - main  # Runs on pull requests to the main branch
+
+env:
+  PROJECT_ID: ${{ secrets.PROJECT_ID }}
+  SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+  MODEL_REGISTERY: ${{ secrets.MODEL_REGISTERY }}
+
+jobs:
+  build-push-model-server:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          project_id: ${{ env.PROJECT_ID }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Docker Auth
+        id: docker-auth
+        uses: 'docker/login-action@v1'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ env.MODEL_REGISTERY }}'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Build and Push Model Server
+        run: make build-push-model-server
+        env:
+          MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}

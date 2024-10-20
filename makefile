@@ -34,6 +34,12 @@ setup:
 run: 
 	$(ENV_LOCATION)/bin/python3 src/pipeline.py
 
+# Used by GHA
+install:
+	apt-get update
+	apt-get install libhdf5-dev libsndfile1 gcc
+	python3 -m pip install -r requirements/requirements.txt
+
 check-uncommited:
 	git diff-index --quiet HEAD
 
@@ -53,6 +59,7 @@ push-model-server: check-uncommited
 	docker tag $(MODEL_SERVER_IMAGE_NAME) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
 	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
 
+# Used by GHA
 build-push-model-server: build-model-server push-model-server
 
 build-pipeline-worker: check-uncommited
