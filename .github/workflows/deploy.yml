@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main  # Runs on push to the main branch
-  pull_request:
+  pull_request: # TODO remove, so only merges to main trigger this 
     branches:
       - main  # Runs on pull requests to the main branch
+
 
 env:
   PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -44,5 +45,37 @@ jobs:
 
       - name: Build and Push Model Server
         run: make build-push-model-server
+        env:
+          MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
+
+  build-push-pipeline-worker:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          project_id: ${{ env.PROJECT_ID }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Docker Auth
+        id: docker-auth
+        uses: 'docker/login-action@v1'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ env.MODEL_REGISTERY }}'
+
+      - name: Build and Push Pipeline Worker
+        run: make build-push-pipeline-worker
         env:
           MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}

@@ -1,8 +1,9 @@
 VERSION := 0.0.0
 GIT_SHA := $(shell git rev-parse --short HEAD)
-PIPELINE_IMAGE_NAME := whale-speech/pipeline:$(VERSION)-$(GIT_SHA)
-MODEL_SERVER_IMAGE_NAME := whale-speech/model-server:$(VERSION)-$(GIT_SHA)
-PIPELINE_WORKER_IMAGE_NAME := whale-speech/pipeline-worker:$(VERSION)-$(GIT_SHA)
+TAG := $(VERSION)-$(GIT_SHA)
+PIPELINE_IMAGE_NAME := whale-speech/pipeline
+MODEL_SERVER_IMAGE_NAME := whale-speech/model-server
+PIPELINE_WORKER_IMAGE_NAME := whale-speech/pipeline-worker
 ENV_LOCATION := .env
 
 local-run: 
@@ -44,32 +45,40 @@ check-uncommited:
 	git diff-index --quiet HEAD
 
 build: check-uncommited
-	docker build -t $(PIPELINE_IMAGE_NAME) --platform linux/amd64 .
+	docker build -t $(PIPELINE_IMAGE_NAME):$(TAG) --platform linux/amd64 .
 
 push: check-uncommited
-	docker tag $(PIPELINE_IMAGE_NAME) $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME)
-	docker push $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME)
+	docker tag $(PIPELINE_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME):$(TAG)
+	docker push $(MODEL_REGISTERY)/$(PIPELINE_IMAGE_NAME):$(TAG)
 
 build-push: build push
 
 build-model-server: check-uncommited
-	docker build -t $(MODEL_SERVER_IMAGE_NAME) --platform linux/amd64 -f Dockerfile.model-server .
+	docker build -t $(MODEL_SERVER_IMAGE_NAME):$(TAG) --platform linux/amd64 -f Dockerfile.model-server .
 
 push-model-server: check-uncommited
-	docker tag $(MODEL_SERVER_IMAGE_NAME) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
-	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME)
+	docker tag $(MODEL_SERVER_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):$(TAG)
+	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):$(TAG)
+
+push-model-server-latest: check-uncommited
+	docker tag $(MODEL_SERVER_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):latest
+	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):latest
 
 # Used by GHA
-build-push-model-server: build-model-server push-model-server
+build-push-model-server: build-model-server push-model-server push-model-server-latest
 
 build-pipeline-worker: check-uncommited
-	docker build -t $(PIPELINE_WORKER_IMAGE_NAME) --platform linux/amd64 -f Dockerfile.pipeline-worker .
+	docker build -t $(PIPELINE_WORKER_IMAGE_NAME):$(TAG) --platform linux/amd64 -f Dockerfile.pipeline-worker .
 
 push-pipeline-worker: check-uncommited
-	docker tag $(PIPELINE_WORKER_IMAGE_NAME) $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME)
-	docker push $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME)
+	docker tag $(PIPELINE_WORKER_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):$(TAG)
+	docker push $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):$(TAG)
 
-build-push-pipeline-worker: build-pipeline-worker push-pipeline-worker
+push-pipeline-worker-latest: check-uncommited
+	docker tag $(PIPELINE_WORKER_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest
+	docker push $(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest
+
+build-push-pipeline-worker: build-pipeline-worker push-pipeline-worker push-pipeline-worker-latest
 
 test-server:
 	python3 examples/test_server.py
@@ -86,7 +95,7 @@ run-dataflow:
 		--num_workers=8 \
 		--max_num_workers=8 \
 		--autoscaling_algorithm=THROUGHPUT_BASED \
-		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):$(TAG) \
 		--start "2024-07-11" \
 		--end "2024-07-11" \
 		--offset 0 \
