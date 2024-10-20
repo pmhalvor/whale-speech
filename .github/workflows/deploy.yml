@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main  # Runs on push to the main branch
-      - refactor-for-dataflow-runner # TODO remove this line
   pull_request:
     branches:
       - main  # Runs on pull requests to the main branch
