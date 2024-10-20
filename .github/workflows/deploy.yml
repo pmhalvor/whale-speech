@@ -14,11 +14,12 @@ env:
   SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
   WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
   MODEL_REGISTERY: ${{ secrets.MODEL_REGISTERY }}
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
   build-push-images:
+    name: Build and Push Images to Google Artifact Registry
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -55,9 +56,9 @@ jobs:
         env:
           MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
 
-
+  # below job is a bit overkill, but ensure teh images are publically available
   publish-model-server:
-    name: Push Model Server Image to Docker Hub
+    name: Publish Latest Images to Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
