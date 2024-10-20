@@ -119,8 +119,8 @@ class BaseSift(beam.PTransform):
         logging.debug(f"Key: {key}")
 
         global_detection_range = [
-            min_max_detections[key]["min"], 
-            min_max_detections[key]["max"]
+            min_max_detections[key].get("min", 0),
+            min_max_detections[key].get("max", len(signal))
         ]
 
         sifted_signal = signal[global_detection_range[0]:global_detection_range[-1]]
