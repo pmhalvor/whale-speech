@@ -2,7 +2,6 @@ from datetime import datetime
 from types import SimpleNamespace
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from stages.classify import BaseClassifier, WhaleClassifier, InferenceClient
@@ -13,7 +12,7 @@ from unittest.mock import patch
 def example_config():
     return SimpleNamespace(
         general = SimpleNamespace(
-            is_local="is_local",
+            filesystem="local",
             show_plots=True,
             project="project",
             dataset_id="dataset_id",

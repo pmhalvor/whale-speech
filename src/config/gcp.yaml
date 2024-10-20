@@ -3,8 +3,7 @@ pipeline:
     verbose: true
     debug: true
     show_plots: false
-    is_local: false
-  
+    filesystem: "gcp"
 
   audio:
     skip_existing: false # if true, skip downstream processing of existing audio files (false during development)

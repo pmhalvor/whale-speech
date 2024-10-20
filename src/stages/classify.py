@@ -28,7 +28,7 @@ class BaseClassifier(beam.PTransform):
 
     def __init__(self, config: SimpleNamespace):
         self.config = config
-        self.is_local = config.general.is_local
+        self.filesystem = config.general.filesystem.lower()
         self.source_sample_rate = config.audio.source_sample_rate
 
         self.batch_duration     = config.classify.batch_duration
@@ -188,16 +188,18 @@ class BaseClassifier(beam.PTransform):
         return t, f, psd
 
     def _plot_audio(self, audio, start, key):
-        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
-            min_max_samples = pickle.load(f)
-        with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
-            all_samples = pickle.load(f)
-    
-        def _plot_signal_detections(signal, min_max_detection_samples, all_samples):
+        try:
+            with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_min_max.pkl", "rb") as f:
+                min_max_samples = pickle.load(f)
+            with open(f"data/plots/Butterworth/{start.year}/{start.month}/{start.day}/data/{key}_all.pkl", "rb") as f:
+                all_samples = pickle.load(f)
+        except FileNotFoundError:
+            min_max_samples = []
+            all_samples = []
+
+        def _plot_signal_detections(min_max_detection_samples, all_samples):
             # TODO refactor plot_signal_detections in classify 
             logging.info(f"Plotting signal detections: {min_max_detection_samples}")
-
-            plt.plot(signal)
             
             # NOTE: for legend logic, plot min_max window first
             if len(min_max_detection_samples):
@@ -228,8 +230,10 @@ class BaseClassifier(beam.PTransform):
             title = f"Signal detections: {start.strftime('%Y-%m-%d %H:%M:%S')}"
             plt.title(title) 
 
-
-        _plot_signal_detections(audio, min_max_samples, all_samples)
+        plt.plot(audio)
+        plt.xlabel(f'Samples (seconds * {self.config.audio.source_sample_rate} Hz)') 
+        plt.ylabel('Amplitude (normalized and centered)') 
+        _plot_signal_detections(min_max_samples, all_samples)
 
     def _plot(self, output):
         audio, start, end, encounter_ids, scores, _ = output
@@ -279,7 +283,7 @@ class BaseClassifier(beam.PTransform):
             key=key
         )
 
-        if not self.is_local:
+        if self.filesystem == "gcp":
             export_path = os.path.join(self.workbucket, export_path)
 
         return export_path
@@ -295,10 +299,12 @@ class BaseClassifier(beam.PTransform):
         classifications_path = self._get_export_path(key)
 
         # update metadata table
-        if self.is_local:
+        if self.filesystem == "local":
             self._store_local(key, classifications_path)
-        else:
+        elif self.filesystem == "gcp":
             self._store_bigquery(key, classifications_path)
+        else:
+            raise ValueError(f"Unsupported filesystem: {self.filesystem}")
 
         # store classifications
         with filesystems.FileSystems.create(classifications_path) as f:
@@ -384,7 +390,7 @@ class InferenceClient(beam.DoFn):
 
     def process(self, element):
         key, batch = element
-        logging.info(f"Sending batch to inference: {key} with {len(batch)} samples")
+        logging.info(f"Sending batch {key} with {len(batch)} samples to inference at: {self.inference_url}")
 
         # skip empty batches
         if len(batch) == 0:

@@ -3,7 +3,7 @@ import pandas as pd
 
 from datetime import datetime
 from types import SimpleNamespace
-from src.stages.postprocess import PostprocessLabels
+from stages.postprocess import PostprocessLabels
 
 @pytest.fixture
 def config():
@@ -22,7 +22,7 @@ def config():
                 pooled_score=SimpleNamespace(type="FLOAT", mode="REQUIRED"),
             ),
         ),
-        general=SimpleNamespace(project="project", dataset_id="dataset_id", is_local=True),
+        general=SimpleNamespace(project="project", dataset_id="dataset_id", filesystem="local"),
     )
 
 @pytest.fixture

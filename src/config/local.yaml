@@ -3,7 +3,7 @@ pipeline:
     verbose: true
     debug: true
     show_plots: false
-    is_local: true
+    filesystem: "local"
 
   audio:
     skip_existing: false # if true, skip downstream processing of existing audio files (false during development)
@@ -17,7 +17,7 @@ pipeline:
   classify:
     batch_duration:  600  # seconds
     inference_retries: 3
-    plot_scores: true
+    plot_scores: false
 
   postprocess:
     min_gap: 60  # 1 minute

@@ -1,6 +1,9 @@
 import apache_beam as beam
 
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
+
+from config import load_pipeline_config
+
 from stages.search import GeometrySearch
 from stages.audio import RetrieveAudio
 from stages.sift import Butterworth
@@ -8,13 +11,13 @@ from stages.classify import WhaleClassifier
 from stages.postprocess import PostprocessLabels
 
 
-from config import load_pipeline_config
 config = load_pipeline_config()
 
 def run():
     # Initialize pipeline options
     pipeline_options = PipelineOptions(
         # runner="DataflowRunner",
+        # region="us-central1",
         project=config.general.project,
         temp_location=config.general.temp_location,
     )
@@ -38,5 +41,16 @@ def run():
         )
 
 
+def setup():
+    import gcp
+    gcp.initialize()
+
+def teardown():
+    import gcp
+    gcp.deduplicate()
+
+
 if __name__ == "__main__":
+    setup()
     run()
+    teardown()
