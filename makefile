@@ -26,8 +26,8 @@ gcp-deduplicate:
 	python3 src/gcp.py --deduplicate
 
 setup:
-	apt-get update
-	apt-get install python3-venv libhdf5-dev libsndfile1 gcc
+	sudo apt-get update
+	sudo apt-get install python3-venv libhdf5-dev libsndfile1 gcc
 	python3 -m venv $(ENV_LOCATION)
 	$(ENV_LOCATION)/bin/pip install -r requirements/requirements.txt
 
@@ -36,8 +36,8 @@ run:
 
 # Used by GHA
 install:
-	apt-get update
-	apt-get install libhdf5-dev libsndfile1 gcc
+	sudo apt-get update
+	sudo apt-get install libhdf5-dev libsndfile1 gcc
 	python3 -m pip install -r requirements/requirements.txt
 
 check-uncommited:

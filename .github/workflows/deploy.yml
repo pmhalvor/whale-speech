@@ -42,9 +42,6 @@ jobs:
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ env.MODEL_REGISTERY }}'
 
-      - name: Install dependencies
-        run: make install
-
       - name: Build and Push Model Server
         run: make build-push-model-server
         env:
