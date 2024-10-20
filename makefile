@@ -4,7 +4,9 @@ TAG := $(VERSION)-$(GIT_SHA)
 PIPELINE_IMAGE_NAME := whale-speech/pipeline
 MODEL_SERVER_IMAGE_NAME := whale-speech/model-server
 PIPELINE_WORKER_IMAGE_NAME := whale-speech/pipeline-worker
-ENV_LOCATION := .env
+
+PUBLIC_MODEL_SERVER_IMAGE_NAME := $(shell echo $(MODEL_SERVER_IMAGE_NAME) | sed 's/\//-/g')
+PUBLIC_PIPELINE_WORKER_IMAGE_NAME := $(shell echo $(PIPELINE_WORKER_IMAGE_NAME) | sed 's/\//-/g')
 
 local-run: 
 	bash scripts/kill_model_server.sh
@@ -27,20 +29,15 @@ gcp-deduplicate:
 	python3 src/gcp.py --deduplicate
 
 setup:
-	sudo apt-get update
-	sudo apt-get install python3-venv libhdf5-dev libsndfile1 gcc
-	python3 -m venv $(ENV_LOCATION)
-	$(ENV_LOCATION)/bin/pip install -r requirements/requirements.txt
-
-run: 
-	$(ENV_LOCATION)/bin/python3 src/pipeline.py
-
-# Used by GHA
-install:
+	conda create -n whale-speech python=3.11
+	conda activate whale-speech
 	sudo apt-get update
 	sudo apt-get install libhdf5-dev libsndfile1 gcc
 	python3 -m pip install -r requirements/requirements.txt
+	python3 -m pip install -r requirements/model-requirements.txt
 
+
+# Docker related
 check-uncommited:
 	git diff-index --quiet HEAD
 
@@ -53,6 +50,8 @@ push: check-uncommited
 
 build-push: build push
 
+
+# Model server related
 build-model-server: check-uncommited
 	docker build -t $(MODEL_SERVER_IMAGE_NAME):$(TAG) --platform linux/amd64 -f Dockerfile.model-server .
 
@@ -64,9 +63,17 @@ push-model-server-latest: check-uncommited
 	docker tag $(MODEL_SERVER_IMAGE_NAME):$(TAG) $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):latest
 	docker push $(MODEL_REGISTERY)/$(MODEL_SERVER_IMAGE_NAME):latest
 
-# Used by GHA
 build-push-model-server: build-model-server push-model-server push-model-server-latest
 
+publish-latest-model-server: build-model-server
+	docker tag $(MODEL_SERVER_IMAGE_NAME):$(TAG) $(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_MODEL_SERVER_IMAGE_NAME):latest
+	docker push $(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_MODEL_SERVER_IMAGE_NAME):latest
+
+test-server:
+	python3 examples/test_server.py
+
+
+# Pipeline worker related
 build-pipeline-worker: check-uncommited
 	docker build -t $(PIPELINE_WORKER_IMAGE_NAME):$(TAG) --platform linux/amd64 -f Dockerfile.pipeline-worker .
 
@@ -80,9 +87,12 @@ push-pipeline-worker-latest: check-uncommited
 
 build-push-pipeline-worker: build-pipeline-worker push-pipeline-worker push-pipeline-worker-latest
 
-test-server:
-	python3 examples/test_server.py
+publish-latest-pipeline-worker: build-pipeline-worker
+	docker tag $(PIPELINE_WORKER_IMAGE_NAME):$(TAG) $(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME):latest
+	docker push $(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME):latest
 
+
+# Pipeline run related
 run-dataflow:
 	python3 src/pipeline.py \
 		--job_name "whale-speech-$(GIT_SHA)" \

@@ -14,9 +14,11 @@ env:
   SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
   WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
   MODEL_REGISTERY: ${{ secrets.MODEL_REGISTERY }}
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
-  build-push-model-server:
+  build-push-images:
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -48,34 +50,34 @@ jobs:
         env:
           MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
 
-  build-push-pipeline-worker:
-    permissions:
-      contents: 'read'
-      id-token: 'write'
+      - name: Build and Push Pipeline Worker
+        run: make build-push-pipeline-worker
+        env:
+          MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
 
+
+  publish-model-server:
+    name: Push Model Server Image to Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Google Auth
-        id: auth
-        uses: 'google-github-actions/auth@v2'
+      - name: Docker Auth (Docker Hub)
+        id: docker-auth-dockerhub
+        uses: docker/login-action@v3
         with:
-          token_format: 'access_token'
-          project_id: ${{ env.PROJECT_ID }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          username: ${{env.DOCKERHUB_USERNAME}}
+          password: ${{env.DOCKERHUB_TOKEN}}
 
-      - name: Docker Auth
-        id: docker-auth
-        uses: 'docker/login-action@v1'
-        with:
-          username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.access_token }}'
-          registry: '${{ env.MODEL_REGISTERY }}'
-
-      - name: Build and Push Pipeline Worker
-        run: make build-push-pipeline-worker
+      - name: Publish Latest Model Server Image
+        run: make publish-latest-model-server
         env:
           MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
+          PUBLIC_MODEL_REGISTERY: docker.io/${{ env.DOCKERHUB_USERNAME }}
+
+      - name: Publish Latest Pipeline Worker Image
+        run: make publish-latest-pipeline-worker
+        env:
+          MODEL_REGISTERY: ${{ env.MODEL_REGISTERY }}
+          PUBLIC_MODEL_REGISTERY: docker.io/${{ env.DOCKERHUB_USERNAME }}
