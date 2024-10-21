@@ -1,4 +1,4 @@
-VERSION := 1.0.0
+VERSION := 1.0.1
 GIT_SHA := $(shell git rev-parse --short HEAD)
 TAG := $(VERSION)-$(GIT_SHA)
 PIPELINE_IMAGE_NAME := whale-speech/pipeline
@@ -107,7 +107,7 @@ run-dataflow:
 		--autoscaling_algorithm=THROUGHPUT_BASED \
 		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
 		--start "2024-08-08" \
-		--end "2024-08-12" \
+		--end "2024-08-10" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
@@ -119,12 +119,13 @@ run-direct:
 		--filesystem gcp \
 		--inference_url $(INFERENCE_URL) \
 		--runner DirectRunner \
-		--worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME) \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
 		--start "2024-08-08" \
-		--end "2024-08-12" \
+		--end "2024-08-08" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
+# --worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME) \
 
 
 rebuild-run-dataflow: build-push-pipeline-worker run-dataflow
