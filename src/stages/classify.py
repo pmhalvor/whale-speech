@@ -415,6 +415,11 @@ class InferenceClient(beam.DoFn):
                 logging.info(f"Retrying in {wait*wait} seconds.")
                 wait += 1
                 time.sleep(wait*wait)
+            except requests.exceptions.HTTPError as e:
+                logging.error(f"HTTP error: {e}")
+                logging.error(f"Retrying in {wait*wait} seconds.")
+                wait += 1
+                time.sleep(wait*wait)
 
         response = requests.post(self.inference_url, json=data)
         response.raise_for_status()
