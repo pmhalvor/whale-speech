@@ -106,8 +106,8 @@ run-dataflow:
 		--max_num_workers=8 \
 		--autoscaling_algorithm=THROUGHPUT_BASED \
 		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
-		--start "2024-08-08" \
-		--end "2024-08-10" \
+		--start "2024-07-11" \
+		--end "2024-07-11" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
@@ -120,8 +120,8 @@ run-direct:
 		--inference_url $(INFERENCE_URL) \
 		--runner DirectRunner \
 		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
-		--start "2024-08-08" \
-		--end "2024-08-08" \
+		--start "2024-07-11" \
+		--end "2024-07-11" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
