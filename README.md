@@ -155,10 +155,11 @@ The default compute resources are quite small and slow. To speed things up, you 
 Note, you may need to configure IAM permissions to allow Dataflow Runners to access images in your Artifact Registry. Read more about that [here](https://cloud.google.com/dataflow/docs/concepts/security-and-permissions).
 
 
-## Resources 
+## References 
 - [HappyWhale](https://happywhale.com/)
 - [open-oceans/happywhale](https://github.com/open-oceans/happywhale)
-- [MBARI's Pacific Ocean Sound Recordings](https://registry.opendata.aws/pacific-sound/)
 - [NOAA and Google's humpback_whale model](https://tfhub.dev/google/humpback_whale/1)
-- [Monterey Bay Hydrophone MARS](https://www.mbari.org/technology/monterey-accelerated-research-system-mars/)
 - [Google Cloud Console](https://console.cloud.google.com/)
+- [Monterey Bay Hydrophone MARS](https://www.mbari.org/technology/monterey-accelerated-research-system-mars/)
+- [MBARI's Pacific Ocean Sound Recordings](https://registry.opendata.aws/pacific-sound/)
+- J. Ryan et al., "New Passive Acoustic Monitoring in Monterey Bay National Marine Sanctuary," OCEANS 2016 MTS/IEEE Monterey, Monterey, CA, USA, 2016, pp. 1-8, doi: [10.1109/OCEANS.2016.7761363](https://ieeexplore.ieee.org/document/7761363).

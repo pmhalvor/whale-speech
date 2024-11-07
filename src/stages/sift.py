@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from typing import Dict, Any
 
 import apache_beam as beam
-import io
 import logging
 import json
 import math
@@ -118,10 +117,13 @@ class BaseSift(beam.PTransform):
         logging.debug(f"Min-max detections: {min_max_detections}")
         logging.debug(f"Key: {key}")
 
-        global_detection_range = [
-            min_max_detections[key]["min"], 
-            min_max_detections[key]["max"]
-        ]
+        if min_max_detections[key]:
+            global_detection_range = [
+                min_max_detections[key]["min"],
+                min_max_detections[key]["max"]
+            ]
+        else:
+            global_detection_range = [0, len(signal)]
 
         sifted_signal = signal[global_detection_range[0]:global_detection_range[-1]]
         audio_path = "No sift audio path stored."
@@ -132,6 +134,17 @@ class BaseSift(beam.PTransform):
     def _plot_signal_detections(self, pcoll, min_max_detections, all_detections):
         signal, start, end, encounter_ids, _ = pcoll
         key = self._build_key(start, end, encounter_ids)
+        
+        # normalize and center
+        signal = signal / np.max(signal)    # normalize
+        signal = signal - np.mean(signal)   # center
+
+        # plt.figure(figsize=(20, 10))
+        plt.plot(signal)
+
+        if not min_max_detections[key]:
+            logging.info(f"No detections for {key}.")
+            return
         
         min_max_detection_samples = [
             min_max_detections[key]["min"],  # maually fix ordering
@@ -151,13 +164,6 @@ class BaseSift(beam.PTransform):
         if not beam.io.filesystems.FileSystems.exists(os.path.dirname(plot_path)):
             beam.io.filesystems.FileSystems.mkdirs(os.path.dirname(plot_path))
 
-        # normalize and center
-        signal = signal / np.max(signal)    # normalize
-        signal = signal - np.mean(signal)   # center
-
-        # plt.figure(figsize=(20, 10))
-        fig = plt.figure()
-        plt.plot(signal)
         
         # NOTE: for legend logic, plot min_max window first
         if len(min_max_detection_samples):
@@ -180,7 +186,6 @@ class BaseSift(beam.PTransform):
                     color='r',
                     zorder=5, # on top of signal
                 )
-
 
         plt.legend(['Input signal', 'detection window', 'all detections']).set_zorder(10)
         plt.xlabel(f'Samples (seconds * {self.sample_rate} Hz)')

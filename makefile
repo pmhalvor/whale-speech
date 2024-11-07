@@ -1,4 +1,4 @@
-VERSION := 1.0.0
+VERSION := 1.0.1
 GIT_SHA := $(shell git rev-parse --short HEAD)
 TAG := $(VERSION)-$(GIT_SHA)
 PIPELINE_IMAGE_NAME := whale-speech/pipeline
@@ -105,12 +105,13 @@ run-dataflow:
 		--num_workers=8 \
 		--max_num_workers=8 \
 		--autoscaling_algorithm=THROUGHPUT_BASED \
-		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):$(TAG) \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
 		--start "2024-07-11" \
 		--end "2024-07-11" \
 		--offset 0 \
 		--margin 1800 \
 		--batch_duration 60 
+# --worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME):latest \
 
 run-direct:
 	python3 src/pipeline.py \
@@ -118,11 +119,13 @@ run-direct:
 		--filesystem gcp \
 		--inference_url $(INFERENCE_URL) \
 		--runner DirectRunner \
-		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME) \
+		--worker_harness_container_image=$(MODEL_REGISTERY)/$(PIPELINE_WORKER_IMAGE_NAME):latest \
 		--start "2024-07-11" \
 		--end "2024-07-11" \
 		--offset 0 \
-		--margin 600
+		--margin 1800 \
+		--batch_duration 60 
+# --worker_harness_container_image=$(PUBLIC_MODEL_REGISTERY)/$(PUBLIC_PIPELINE_WORKER_IMAGE_NAME) \
 
 
 rebuild-run-dataflow: build-push-pipeline-worker run-dataflow
